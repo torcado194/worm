@@ -1,6 +1,9 @@
 const fs = require('fs');
+const chalk = require('chalk');
 
 const EDGE = Symbol("edge");
+
+const log = console.log;
 
 function Board(source){
     this.source = source;
@@ -115,8 +118,8 @@ function Worm(board, delay = 0){
         this.wallMode = false;
         this.charString = [];
         this.charStringing = false;
-        this.numberString = [];
-        this.numberStringing = false;
+        this.numString = [];
+        this.numStringing = false;
         
         this.checkX = function(){
             if(board.get(this.x, this.y) === EDGE){
@@ -141,27 +144,39 @@ function Worm(board, delay = 0){
         
         this.execute = function(){
             this.instruction = board.get(this.x, this.y);
+            
             if(this.instruction === EDGE){
-                //something went wrong
+                
+            } else if(this.charStringing) {
+                stack.push(parseChar(this.instruction));
+            } else if(this.numStringing){
+                stack.push(parseNum(this.instruction));
             } else {
                 worm.run(this.instruction);
             }
-            worm.update();
         }
         this.move = function(){
-            this.prev = {x, y};
-            if(this.angle === 3 || this.angle === 7){
+            let angle = toAngle(this.dir);
+            if(angle === 0 || angle === 4){
+                this.x += this.dir.x;
+                this.checkX();
+            } else if(angle === 2 || angle === 6){
+                this.y += this.dir.y;
+                this.checkY();
+            } else if(angle === 1 || angle === 5){
+                this.x += this.dir.x;
+                this.checkX();
+                this.y += this.dir.y;
+                this.checkY();
+            } else if(angle === 3 || angle === 7){
                 this.y += this.dir.y;
                 this.checkY();
                 this.x += this.dir.x;
                 this.checkX();
-            } else {
-                this.x += this.dir.x;
-                this.checkX();
-                this.y += this.dir.y;
-                this.checkY();
             }
-            console.log(this.x, this.y);
+            let inst = this.instruction === EDGE ? '░' : this.instruction;
+            log(chalk`{green ${inst}}    {cyan (${this.x}, ${this.y})}  |  {red (${this.dir.x}, ${this.dir.y})}${new Array(8 - `${this.dir.x}, ${this.dir.y}`.length).join(' ')}: {keyword('orange') ${angle}}`);
+            worm.update();
         }
         
         /*this.setDir(x, y){
@@ -184,14 +199,15 @@ function Worm(board, delay = 0){
         this.toggleCharString = function(){
             this.charStringing = !this.charStringing;
         }
-        this.toggleNumberString = function(){
-            this.numberStringing = !this.numberStringing;
+        this.toggleNumString = function(){
+            this.numStringing = !this.numStringing;
         }
     }
     
     let instructions = {
         '': () => {},
         ' ': () => {},
+        [EDGE]: () => {},
         '0': () => {
             stack.push(0);
         },
@@ -288,7 +304,7 @@ function Worm(board, delay = 0){
             pointer.toggleCharString();
         },
         '\'': () => {
-            pointer.toggleNumberString();
+            pointer.toggleNumString();
         },
         '>': () => {
             pointer.dir = {x: 1, y: 0};
@@ -439,7 +455,7 @@ function Worm(board, delay = 0){
             //sleep(x);
         },
         ';': () => {
-            //end();
+            worm.end();
         },
         'i': () => {
             let x = stack.pop();
@@ -465,15 +481,15 @@ function Worm(board, delay = 0){
         if(running){
             if(delay){
                 setTimeout(()=>{
-                    console.log(pointer.instruction);
                     pointer.execute();
                     pointer.move();
                 }, delay);
             } else {
-                console.log(pointer.instruction);
                 pointer.execute();
                 pointer.move();
             }
+        } else {
+            log(chalk.magenta("=== done! ==="));
         }
     }
     
@@ -502,7 +518,7 @@ function init(){
     let board = new Board(source);
     board.set(3,3,"f");
     console.log(board.code);
-    let worm = new Worm(board, 200);
+    let worm = new Worm(board, args[1] || 200);
     worm.init();
 }
 init();
@@ -512,12 +528,50 @@ function toAngle(x, y){
         y = x.y;
         x = x.x;
     }
-    return 2 - Math.atan2(y,x) * (4/Math.PI);
+    return (Math.atan2(y,x) * (4/Math.PI) + 8) % 8;
 }
 
 function toDir(a){
     return {x: mod(Math.round(Math.cos((Math.PI/4) * a)), 8),
             y: mod(Math.round(Math.sin((Math.PI/4) * a)), 8)};
+}
+
+function parseChar(item){
+    if(typeof item === "number"){
+        return item;
+    } else if(typeof item === "string"){
+        return item.charCodeAt(0);
+    } else if(Array.isArray(item)){
+        return parseChar(item.pop());
+    }
+}
+
+function parseNum(item){
+    if(typeof item === "string"){
+        //split it? return first number? im not sure
+    } else if(typeof item === "number"){
+        return item;
+    } else if(Array.isArray(item)){
+        let num = 0,
+            negative = false,
+            inFraction = false;
+        if(item[0] === "-"){
+            negative = true;
+        }
+        for(let i = 0; i < item.length; i++){
+            if(/[0-9]/.test(item[i])){
+                
+            } else if(/\./.test(item[i])) {
+                if(inFraction){
+                    break;
+                } else {
+                    inFraction = true;
+                }
+            } else {
+                break;
+            }
+        }
+    }
 }
 
 function mod(x, n){

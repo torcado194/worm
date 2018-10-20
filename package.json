@@ -1,0 +1,25 @@
+{
+  "name": "worm",
+  "version": "1.0.0",
+  "description": "a two-dimensional stack-based esolang",
+  "main": "main.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/torcado194/worm.git"
+  },
+  "keywords": [
+    "esolang"
+  ],
+  "author": "torcado",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/torcado194/worm/issues"
+  },
+  "homepage": "https://github.com/torcado194/worm#readme",
+  "dependencies": {
+    "chalk": "^2.4.1"
+  }
+}
