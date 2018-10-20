@@ -1,6 +1,6 @@
-# \/\/>
+# \\/\\/>
 
-\/\/> (pronounced wɜrm) is a stack-based, two-dimensional esoteric programming language. It builds upon many of the ideas of ><> and similar languages, introducing concepts such as wormholes, diagonal movement, stack-based register, separate character and number systems, and more.
+\\/\\/> (pronounced wɜrm) is a stack-based, two-dimensional esoteric programming language. It builds upon many of the ideas of ><> and similar languages, introducing concepts such as wormholes, diagonal movement, stack-based register, separate character and number systems, and more.
 
 # Getting started
 
