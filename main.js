@@ -1,61 +1,79 @@
 const fs = require('fs');
 const chalk = require('chalk');
+const events = require('events').EventEmitter;
 
 const EDGE = Symbol("edge");
 
 const log = console.log;
 
-function Board(source){
-    this.source = source;
-    this.code = [[]];
-    this.bottom = 0;
-    
-    this.parse = function(){
-        this.code = [];
-        let lines = this.source.split(/\r?\n/); //split lines into array
-        this.code = lines.map(v => v.split('')); //split each line into individual characters
-        this.bottom = this.code.length - 1;
-    }
-    this.parse();
-    this.get = function(x, y){
-        //return edge if outside bounds
-        if(this.code[y] == undefined || this.code[y][x] === undefined){
-            return EDGE;
-        } else {
-            return this.code[y][x];
-        }
-    }
-    this.set = function(x, y, v){
-        //check if outside bounds
-        if(this.get(x, y) === EDGE){
-            //create new lines if lower than bottom
-            if(this.code[y] === undefined){
-                for(let i = 0; i < y - this.bottom; i++){
-                    this.code.push([]);
-                }
-                this.bottom = this.code.length - 1;
-            }
-            //create space between end of line and character
-            let line = this.code[y];
-            let width = line.length;
-            for(let i = 0; i < x - width; i++){
-                line.push(" ");
-            }
-            line[x] = v;
-        } else {
-            this.code[y][x] = v;
-        }
-    }
-}
-
-function Worm(board, delay = 0){
+function Worm(code, delay = 0){
     let worm = this;
-    this.board = board;
     
-    let source = '',
-        running = false,
+    /*let source = worm.source = code;
+    let running = worm.running = false;
+    let stack = worm.stack = {};
+    let pointer = worm.pointer = {};
+    let board = worm.board = {};
+    let output = worm.output = [];*/
+    
+    let board,
         stack,
         pointer;
+    
+    worm.source = code;
+    worm.output = [];
+    worm.running = false;
+    
+    this.init = function(){
+        board = worm.board = new Board(worm.source);
+        stack = worm.stack = new Stack();
+        pointer = worm.pointer = new Pointer();
+        worm.running = true;
+        this.update();
+    }
+    
+    function Board(source){
+        this.source = source;
+        this.code = [[]];
+        this.bottom = 0;
+        
+        this.parse = function(){
+            this.code = [];
+            let lines = this.source.split(/\r?\n/); //split lines into array
+            this.code = lines.map(v => v.split('')); //split each line into individual characters
+            this.bottom = this.code.length - 1;
+        }
+        this.parse();
+        this.get = function(x, y){
+            //return edge if outside bounds
+            if(this.code[y] == undefined || this.code[y][x] === undefined){
+                return EDGE;
+            } else {
+                return this.code[y][x];
+            }
+        }
+        this.set = function(x, y, v){
+            //check if outside bounds
+            if(this.get(x, y) === EDGE){
+                //create new lines if lower than bottom
+                if(this.code[y] === undefined){
+                    for(let i = 0; i < y - this.bottom; i++){
+                        this.code.push([]);
+                    }
+                    this.bottom = this.code.length - 1;
+                }
+                //create space between end of line and character
+                let line = this.code[y];
+                let width = line.length;
+                for(let i = 0; i < x - width; i++){
+                    line.push(" ");
+                }
+                line[x] = v;
+            } else {
+                this.code[y][x] = v;
+            }
+        }
+    }
     
     function Stack(values = [], r = false){
         this.values = values;
@@ -226,10 +244,12 @@ function Worm(board, delay = 0){
     }
     
     worm.printChar = function(char){
+        worm.output.push(String.fromCharCode(char));
         log(chalk.keyword('orange')(String.fromCharCode(char)));
     }
     
     worm.printNum = function(num){
+        worm.output.push(num);
         log(chalk.keyword('orange')(num));
     }
     
@@ -504,21 +524,14 @@ function Worm(board, delay = 0){
         },
     }
     
-    this.init = function(){
-        stack = new Stack();
-        pointer = new Pointer();
-        running = true;
-        this.update();
-    }
-    
     this.run = function(instruction){
         instructions[instruction]();
     }
     
     this.update = function(){
-        pointer.execute();
-        pointer.move();
-        if(running){
+        worm.pointer.execute();
+        worm.pointer.move();
+        if(worm.running){
             if(delay){
                 setTimeout(()=>{
                     worm.update();
@@ -528,11 +541,12 @@ function Worm(board, delay = 0){
             }
         } else {
             log(chalk.magenta("=== done! ==="));
+            log(chalk.keyword('orange')(worm.output.join('')));
         }
     }
     
     this.end = function(){
-        running = false;
+        worm.running = false;
     }
     
 }
@@ -541,6 +555,7 @@ function init(){
     
     //grab cli arguments
     let args = process.argv.slice(2);
+    let source = '';
     
     //if -c or --code flag is passed, ignore file input
     if(args.includes("-c") || args.includes("--code")){
@@ -553,11 +568,10 @@ function init(){
             console.log("could not find file");
         }
     }
-    let board = new Board(source);
-    board.set(3,3,"f");
-    console.log(board.code);
-    debugger;
-    let worm = new Worm(board, args[1] || 200);
+    
+    //board.set(3,3,"f");
+    //console.log(board.code);
+    let worm = new Worm(source, args[1] || 200);
     worm.init();
 }
 init();
