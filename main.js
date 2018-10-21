@@ -69,8 +69,12 @@ function Worm(board, delay = 0){
             return this.current.values.pop();
         }
         
-        this.push = function(){
-            return this.current.values.push();
+        this.push = function(v){
+            return this.current.values.push(v);
+        }
+        
+        this.length = function(){
+            return this.current.values.length;
         }
         
         this.fork = function(n){
@@ -89,7 +93,7 @@ function Worm(board, delay = 0){
         }
         
         this.reverse = function(){
-            this.current.reverse();
+            this.current.values.reverse();
         }
         
         this.shift = function(){
@@ -148,9 +152,21 @@ function Worm(board, delay = 0){
             if(this.instruction === EDGE){
                 
             } else if(this.charStringing) {
-                stack.push(parseChar(this.instruction));
+                if(this.instruction === '"'){
+                    worm.run(this.instruction);
+                } else {
+                    log(parseChar(this.instruction));
+                    stack.push(parseChar(this.instruction));
+                }
             } else if(this.numStringing){
-                stack.push(parseNum(this.instruction));
+                //for now, parsing stores values in a list to be parsed at once. may change later to parse as it runs,
+                // which may require the functions to be part of Pointer.
+                if(this.instruction === "'"){
+                    worm.run(this.instruction);
+                } else {
+                    this.numString.push(this.instruction);
+                }
+                
             } else {
                 worm.run(this.instruction);
             }
@@ -175,8 +191,7 @@ function Worm(board, delay = 0){
                 this.checkX();
             }
             let inst = this.instruction === EDGE ? '░' : this.instruction;
-            log(chalk`{green ${inst}}    {cyan (${this.x}, ${this.y})}  |  {red (${this.dir.x}, ${this.dir.y})}${new Array(8 - `${this.dir.x}, ${this.dir.y}`.length).join(' ')}: {keyword('orange') ${angle}}`);
-            worm.update();
+            log(chalk`{green ${inst}}    {cyan (${this.x}, ${this.y})}  |  {red (${this.dir.x}, ${this.dir.y})}${new Array(8 - `${this.dir.x}, ${this.dir.y}`.length).join(' ')}: {magenta ${angle}}`);
         }
         
         /*this.setDir(x, y){
@@ -200,8 +215,22 @@ function Worm(board, delay = 0){
             this.charStringing = !this.charStringing;
         }
         this.toggleNumString = function(){
+            this.numString.reverse();
+            if(this.numStringing){
+                while(this.numString.length > 0){
+                    stack.push(parseNum(this.numString));
+                }
+            }
             this.numStringing = !this.numStringing;
         }
+    }
+    
+    worm.printChar = function(char){
+        log(chalk.keyword('orange')(String.fromCharCode(char)));
+    }
+    
+    worm.printNum = function(num){
+        log(chalk.keyword('orange')(num));
     }
     
     let instructions = {
@@ -336,9 +365,11 @@ function Worm(board, delay = 0){
         },
         'x': () => {
             let angle = toAngle(pointer.x - pointer.prev.x, pointer.y - pointer.prev.y);
+            log(pointer.x, pointer.y);
             pointer.setAngle(angle + 1);
             pointer.move();
             pointer.setAngle(angle);
+            log(pointer.x, pointer.y);
         },
         'y': () => {
             let angle = toAngle(pointer.x - pointer.prev.x, pointer.y - pointer.prev.y);
@@ -425,7 +456,7 @@ function Worm(board, delay = 0){
             stack.reverse();
         },
         'h': () => {
-            stack.push(stack.length);
+            stack.push(stack.length());
         },
         '[': () => {
             stack.fork(stack.pop());
@@ -458,11 +489,18 @@ function Worm(board, delay = 0){
             worm.end();
         },
         'i': () => {
-            let x = stack.pop();
-            //sleep(x);
+            //
         },
         'j': () => {
-            worm.end();
+            //
+        },
+        'u': () => {
+            let x = stack.pop();
+            worm.printChar(x);
+        },
+        'n': () => {
+            let x = stack.pop();
+            worm.printNum(x);
         },
     }
     
@@ -478,15 +516,15 @@ function Worm(board, delay = 0){
     }
     
     this.update = function(){
+        pointer.execute();
+        pointer.move();
         if(running){
             if(delay){
                 setTimeout(()=>{
-                    pointer.execute();
-                    pointer.move();
+                    worm.update();
                 }, delay);
             } else {
-                pointer.execute();
-                pointer.move();
+                worm.update();
             }
         } else {
             log(chalk.magenta("=== done! ==="));
@@ -515,19 +553,10 @@ function init(){
             console.log("could not find file");
         }
     }
-    
-    let s = "=2a.3 - -34+1.1b";
-    console.log(s);
-    s = s.split("").reverse();
-    let a = [];
-    for(let i = 0; i < 9; i++){
-        a.push(parseNum(s));
-    }
-    log(a);
-    
     let board = new Board(source);
     board.set(3,3,"f");
     console.log(board.code);
+    debugger;
     let worm = new Worm(board, args[1] || 200);
     worm.init();
 }
