@@ -515,6 +515,16 @@ function init(){
             console.log("could not find file");
         }
     }
+    
+    let s = "=2a.3 - -34+1.1b";
+    console.log(s);
+    s = s.split("").reverse();
+    let a = [];
+    for(let i = 0; i < 9; i++){
+        a.push(parseNum(s));
+    }
+    log(a);
+    
     let board = new Board(source);
     board.set(3,3,"f");
     console.log(board.code);
@@ -548,29 +558,74 @@ function parseChar(item){
 
 function parseNum(item){
     if(typeof item === "string"){
-        //split it? return first number? im not sure
+        return parseNum(item.split('').reverse());
     } else if(typeof item === "number"){
         return item;
     } else if(Array.isArray(item)){
         let num = 0,
+            n = 0,
+            d = -1,
             negative = false,
-            inFraction = false;
-        if(item[0] === "-"){
-            negative = true;
-        }
+            inFraction = false,
+            cur;
+        
+        //clear leading spaces
         for(let i = 0; i < item.length; i++){
-            if(/[0-9]/.test(item[i])){
-                
-            } else if(/\./.test(item[i])) {
+            if(item[item.length-1] === " "){
+                item.pop();
+            } else {
+                break;
+            }
+        }
+        //check leading -
+        if(item[item.length-1] === "-"){
+            negative = true;
+            if(item.length <= 1 || !/[.0-9]/.test(item[item.length-2])){ // if next item isn't a number or decimal point, return minus char
+                return item.pop();
+            } else {
+                item.pop();
+            }
+        }
+        //check leading .
+        if(item[item.length-1] === "."){
+            inFraction = true;
+            if(item.length <= 1 || !/[0-9]/.test(item[item.length-2])){ // if next item isn't a number, return decimal point char
+                return item.pop();
+            } else {
+                item.pop();
+            }
+        }
+        
+        //return if just a char
+        if(!/[0-9]/.test(item[item.length-1])){
+            return item.pop();
+        }
+        let length = item.length;
+        for(let i = 0; i < length; i++){
+            cur = item[item.length - 1];
+            if(/[0-9]/.test(cur)){
+                if(inFraction){
+                    num += (10 ** (d--)) * parseInt(cur);
+                } else {
+                    num *= 10
+                    num += parseInt(cur);
+                }
+                item.pop();
+            } else if(/\./.test(cur)){
                 if(inFraction){
                     break;
                 } else {
                     inFraction = true;
+                    item.pop();
                 }
             } else {
                 break;
             }
         }
+        if(negative){
+            num *= -1;
+        }
+        return num;
     }
 }
 
