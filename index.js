@@ -28,6 +28,9 @@ function Worm(code, delay = 0){
         pointer = worm.pointer = new Pointer();
         worm.running = true;
         worm.emit('test');
+        
+        log(worm.board.code);
+        
         this.update();
     }
     
@@ -47,8 +50,8 @@ function Worm(code, delay = 0){
         this.get = function(x, y){
             //return edge if outside bounds
             if(this.code[y] == undefined || this.code[y][x] === undefined){
-                //return EDGE;
-                return -1;
+                return EDGE;
+                //return -1;
             } else {
                 return this.code[y][x];
             }
@@ -525,7 +528,11 @@ function Worm(code, delay = 0){
         'g': () => {
             let y = stack.pop();
             let x = stack.pop();
-            stack.push(board.get(x,y));
+            let v = board.get(x,y);
+            if(v == worm.EDGE){
+                v = -1
+            }
+            stack.push(v);
         },
         's': () => {
             let y = stack.pop();
