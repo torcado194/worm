@@ -33,7 +33,7 @@ function Worm(code, delay = 0){
     
     
     function Board(source){
-        this.source = source;
+        this.source = source.toLowerCase();
         this.code = [[]];
         this.bottom = 0;
         
@@ -47,7 +47,8 @@ function Worm(code, delay = 0){
         this.get = function(x, y){
             //return edge if outside bounds
             if(this.code[y] == undefined || this.code[y][x] === undefined){
-                return EDGE;
+                //return EDGE;
+                return -1;
             } else {
                 return this.code[y][x];
             }
@@ -179,7 +180,7 @@ function Worm(code, delay = 0){
             worm.emit('instruction', this.instruction, null, {x: this.x, y: this.y});
             
             if(this.instruction === EDGE){
-                
+                log("b")
             } else if(this.charStringing) {
                 if(this.instruction === '"'){
                     worm.run(this.instruction);
@@ -474,7 +475,7 @@ function Worm(code, delay = 0){
                     } 
                 }
             }
-            pointer.setPos(x, y);
+            pointer.setPos(target.x, target.y);
             pointer.prev = {x: pointer.x, y: pointer.y};
         },
         ':': () => {
@@ -552,6 +553,12 @@ function Worm(code, delay = 0){
         'n': () => {
             let x = stack.pop();
             worm.printNum(x);
+        },
+        'r': () => {
+            //
+        },
+        't': () => {
+            //
         },
     }
     

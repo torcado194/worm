@@ -22,6 +22,8 @@ function init(){
         }
     }
     
+    log(source);
+    
     let worm = new Worm(source, args[1] || 200);
     worm.on('instruction', (char, name, pos) => {
         //log(chalk.blueBright(char));
