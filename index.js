@@ -1,6 +1,4 @@
-const fs = require('fs');
 const util = require('util');
-const chalk = require('chalk');
 const EventEmitter = require('events').EventEmitter;
 
 const EDGE = Symbol("edge");
@@ -22,7 +20,7 @@ function Worm(code, delay = 0){
     worm.output = [];
     worm.running = false;
     
-    worm.edge = EDGE;
+    worm.edge = worm.EDGE = EDGE;
     
     this.init = function(){
         board = worm.board = new Board(worm.source);
@@ -186,7 +184,6 @@ function Worm(code, delay = 0){
                 if(this.instruction === '"'){
                     worm.run(this.instruction);
                 } else {
-                    log(parseChar(this.instruction));
                     stack.push(parseChar(this.instruction));
                 }
             } else if(this.numStringing){
@@ -256,6 +253,10 @@ function Worm(code, delay = 0){
         
         this.rotate = function(a){
             this.setAngle(toAngle(this.dir) + a);
+        }
+        
+        this.getAngle = function(){
+            return toAngle(this.dir);
         }
         
         this.toggleWallMode = function(){
@@ -560,8 +561,8 @@ function Worm(code, delay = 0){
     
     this.update = function(){
         worm.pointer.execute();
-        worm.pointer.move();
         if(worm.running){
+            worm.pointer.move();
             if(delay){
                 setTimeout(()=>{
                     worm.update();
@@ -570,45 +571,16 @@ function Worm(code, delay = 0){
                 worm.update();
             }
         } else {
-            log(chalk.magenta("=== done! ==="));
-            log(chalk.keyword('orange')(worm.output.join('')));
+            //log(chalk.keyword('orange')(worm.output.join('')));
         }
     }
     
     this.end = function(){
         worm.running = false;
-        worm.emit('end', worm.output);
+        worm.emit('end', worm.output.join(''));
     }
     
 }
-
-function init(){
-    
-    //grab cli arguments
-    let args = process.argv.slice(2);
-    let source = '';
-    
-    //if -c or --code flag is passed, ignore file input
-    if(args.includes("-c") || args.includes("--code")){
-        let index = args.findIndex(a => a === "-c" || a === "--code");
-        source = args[index + 1];
-    } else {
-        try{
-            source = fs.readFileSync(args[0], {encoding: "utf8"});
-        } catch(e) {
-            console.log("could not find file");
-        }
-    }
-    
-    //board.set(3,3,"f");
-    //console.log(board.code);
-    let worm = new Worm(source, args[1] || 200);
-    worm.on('test', ()=>{
-        log(chalk.yellow("wow!"))
-    });
-    worm.init();
-}
-init();
 
 function toAngle(x, y){
     if(y === undefined){
@@ -709,3 +681,6 @@ function parseNum(item){
 function mod(x, n){
     return (x % n + n) % n;
 }
+
+
+module.exports = Worm;
