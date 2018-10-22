@@ -7,7 +7,7 @@ const log = console.log;
 
 util.inherits(Worm, EventEmitter);
 
-function Worm(code, delay = 0){
+function Worm(code, input, delay = 0){
     //EventEmitter.call(this);
     
     let worm = this;
@@ -17,6 +17,7 @@ function Worm(code, delay = 0){
         pointer;
     
     worm.source = code;
+    worm.input = input;
     worm.output = [];
     worm.running = false;
     
@@ -26,6 +27,10 @@ function Worm(code, delay = 0){
         board = worm.board = new Board(worm.source);
         stack = worm.stack = new Stack();
         pointer = worm.pointer = new Pointer();
+        if(typeof worm.input === 'string'){
+            worm.input = worm.input.split('');
+        }
+        worm.input.reverse();
         worm.running = true;
         worm.emit('test');
         
@@ -565,10 +570,12 @@ function Worm(code, delay = 0){
             worm.end();
         },
         'i': () => {
-            //
+            let x = worm.getCharInput();
+            stack.push(x);
         },
         'j': () => {
-            //
+            let x = worm.getNumInput();
+            stack.push(x);
         },
         'u': () => {
             let x = stack.pop();
@@ -623,6 +630,13 @@ function Worm(code, delay = 0){
         worm.emit('end', worm.output.join(''));
     }
     
+    this.getCharInput = function(){
+        return parseChar(worm.input);
+    }
+    
+    this.getNumInput = function(){
+        return parseNum(worm.input);
+    }
 }
 
 function toAngle(x, y){
@@ -690,7 +704,7 @@ function parseNum(item){
         
         //return if just a char
         if(!/[0-9]/.test(item[item.length-1])){
-            return item.pop();
+            return item.pop().charCodeAt(0);
         }
         let length = item.length;
         for(let i = 0; i < length; i++){

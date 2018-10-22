@@ -7,23 +7,34 @@ const log = console.log;
 
 let charMode = false;
 
+let flags = {
+    '-c': "code",
+    '--code': "code",
+    '-d': "delay",
+    '--delay': "delay"
+}
+
 function init(){
 
     //grab cli arguments
     let args = process.argv.slice(2);
     let source = '',
+        sourceIndex = 0,
+        input = '',
         delay = 0;
     log(args);
     //if -c or --code flag is passed, ignore file input
     if(args.includes("-c") || args.includes("--code")){
         let index = args.findIndex(a => a === "-c" || a === "--code");
         source = args[index + 1];
+        sourceIndex = index + 1;
     } else {
         try{
             source = fs.readFileSync(args[0], {encoding: "utf8"});
         } catch(e) {
             console.log("could not find file", e);
         }
+        sourceIndex = 0;
     }
     if(args.includes("-d") || args.includes("--delay")){
         let index = args.findIndex(a => a === "-d" || a === "--delay");
@@ -32,13 +43,20 @@ function init(){
         delay = 0;
     }
     
+    if(Object.keys(flags).includes(args[sourceIndex + 1])){
+        input = '';
+    } else {
+        input = args[sourceIndex + 1];
+    }
+    
     log(source);
     
-    let worm = new Worm(source, delay);
+    let worm = new Worm(source, input, delay);
     worm.on('instruction', (char, name, pos) => {
         //log(chalk.blueBright(char));
         let inst = char === worm.EDGE ? '░' : char;
-        log(chalk`{green ${inst}}    {cyan (${pos.x}, ${pos.y})}{gray   |  }{red (${worm.pointer.dir.x}, ${worm.pointer.dir.y})}${new Array(8 - `${worm.pointer.dir.x}, ${worm.pointer.dir.y}`.length).join(' ')}: {magenta ${worm.pointer.getAngle()}}{gray   |  }{yellow ${worm.stack.values}}`);
+        log(chalk.keyword('pink')('haha'))
+        log(chalk`{green ${inst}}    {cyan (${pos.x}, ${pos.y})}{gray   |  }{red (${worm.pointer.dir.x}, ${worm.pointer.dir.y})}${new Array(8 - `${worm.pointer.dir.x}, ${worm.pointer.dir.y}`.length).join(' ')}: {magenta ${worm.pointer.getAngle()}}{gray   |  }{yellow ${worm.stack.values}}{redBright  ${worm.input}}`);
     });
     worm.on('output', (data) => {
         log(chalk.keyword('orange')(data));
