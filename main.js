@@ -1,20 +1,18 @@
 const fs = require('fs');
+const util = require('util');
 const chalk = require('chalk');
-const events = require('events').EventEmitter;
+const EventEmitter = require('events').EventEmitter;
 
 const EDGE = Symbol("edge");
 
 const log = console.log;
 
+util.inherits(Worm, EventEmitter);
+
 function Worm(code, delay = 0){
-    let worm = this;
+    //EventEmitter.call(this);
     
-    /*let source = worm.source = code;
-    let running = worm.running = false;
-    let stack = worm.stack = {};
-    let pointer = worm.pointer = {};
-    let board = worm.board = {};
-    let output = worm.output = [];*/
+    let worm = this;
     
     let board,
         stack,
@@ -24,13 +22,17 @@ function Worm(code, delay = 0){
     worm.output = [];
     worm.running = false;
     
+    worm.edge = EDGE;
+    
     this.init = function(){
         board = worm.board = new Board(worm.source);
         stack = worm.stack = new Stack();
         pointer = worm.pointer = new Pointer();
         worm.running = true;
+        worm.emit('test');
         this.update();
     }
+    
     
     function Board(source){
         this.source = source;
@@ -53,6 +55,8 @@ function Worm(code, delay = 0){
             }
         }
         this.set = function(x, y, v){
+            let oldBoard = this.code.map(a => a.slice());
+            let oldChar = this.get(x, y);
             //check if outside bounds
             if(this.get(x, y) === EDGE){
                 //create new lines if lower than bottom
@@ -72,6 +76,9 @@ function Worm(code, delay = 0){
             } else {
                 this.code[y][x] = v;
             }
+            
+            let newBoard = this.code.map(a => a.slice());
+            worm.emit('boardUpdate', newBoard, oldBoard, [v], [oldChar]);
         }
     }
     
@@ -152,6 +159,8 @@ function Worm(code, delay = 0){
                     this.x = 0;
                 }
             }
+            
+            worm.emit('edgeDetect', {x: this.x, y: this.y});
         }
         
         this.checkY = function(){
@@ -162,10 +171,14 @@ function Worm(code, delay = 0){
                     this.y = 0;
                 }
             }
+            
+            worm.emit('edgeDetect', {x: this.x, y: this.y});
         }
         
         this.execute = function(){
             this.instruction = board.get(this.x, this.y);
+            
+            worm.emit('instruction', this.instruction, null, {x: this.x, y: this.y});
             
             if(this.instruction === EDGE){
                 
@@ -208,13 +221,34 @@ function Worm(code, delay = 0){
                 this.x += this.dir.x;
                 this.checkX();
             }
-            let inst = this.instruction === EDGE ? '░' : this.instruction;
-            log(chalk`{green ${inst}}    {cyan (${this.x}, ${this.y})}  |  {red (${this.dir.x}, ${this.dir.y})}${new Array(8 - `${this.dir.x}, ${this.dir.y}`.length).join(' ')}: {magenta ${angle}}`);
+            
+            worm.emit('positionUpdate', {x: this.x, y: this.y}, {x: this.prev.x, y: this.prev.y});
+            this.prev = {x: this.x, y: this.y};
+            //let inst = this.instruction === EDGE ? '░' : this.instruction;
+            //log(chalk`{green ${inst}}    {cyan (${this.x}, ${this.y})}  |  {red (${this.dir.x}, ${this.dir.y})}${new Array(8 - `${this.dir.x}, ${this.dir.y}`.length).join(' ')}: {magenta ${angle}}`);
         }
         
-        /*this.setDir(x, y){
+        this.setPos = function(x, y){
+            if(y === undefined){
+                y = x.y;
+                x = x.x;
+            }
+            this.x = x;
+            this.y = y;
+            
+            worm.emit('positionUpdate', {x: this.x, y: this.y}, {x: this.prev.x, y: this.prev.y});
+        }
+        
+        this.setDir = function(x, y){
+            let old = {x: this.dir.x, y: this.dir.y};
+            if(y === undefined){
+                y = x.y;
+                x = x.x;
+            }
             this.dir = {x, y};
-        }*/
+            
+            worm.emit('directionUpdate', {x: this.dir.x, y: this.dir.y}, {x: old.x, y: old.y});
+        }
         
         this.setAngle = function(a){
             this.dir = toDir(a);
@@ -245,12 +279,12 @@ function Worm(code, delay = 0){
     
     worm.printChar = function(char){
         worm.output.push(String.fromCharCode(char));
-        log(chalk.keyword('orange')(String.fromCharCode(char)));
+        worm.emit('output', String.fromCharCode(char), char, "character");
     }
     
     worm.printNum = function(num){
         worm.output.push(num);
-        log(chalk.keyword('orange')(num));
+        worm.emit('output', num, num, "number");
     }
     
     let instructions = {
@@ -356,40 +390,38 @@ function Worm(code, delay = 0){
             pointer.toggleNumString();
         },
         '>': () => {
-            pointer.dir = {x: 1, y: 0};
+            pointer.setDir(1, 0);
         },
         'v': () => {
-            pointer.dir = {x: 0, y: 1};
+            pointer.setDir(0, 1);
         },
         '<': () => {
-            pointer.dir = {x: -1, y: 0};
+            pointer.setDir(-1, 0);
         },
         '^': () => {
-            pointer.dir = {x: 0, y: -1};
+            pointer.setDir(0, -1);
         },
         '\\': () => {
             let dir = pointer.dir;
-            pointer.dir = {x: dir.y, y: dir.x};
+            pointer.setDir(dir.y, dir.x);
         },
         '/': () => {
             let dir = pointer.dir;
-            pointer.dir = {x: -dir.y, y: -dir.x};
+            pointer.setDir(-dir.y, -dir.x);
         },
         '|': () => {
             let dir = pointer.dir;
-            pointer.dir = {x: -dir.x, y: dir.y};
+            pointer.setDir(-dir.x, dir.y);
         },
         '_': () => {
             let dir = pointer.dir;
-            pointer.dir = {x: dir.x, y: -dir.y};
+            pointer.setDir(dir.x, -dir.y);
         },
         'x': () => {
             let angle = toAngle(pointer.x - pointer.prev.x, pointer.y - pointer.prev.y);
-            log(pointer.x, pointer.y);
             pointer.setAngle(angle + 1);
             pointer.move();
             pointer.setAngle(angle);
-            log(pointer.x, pointer.y);
         },
         'y': () => {
             let angle = toAngle(pointer.x - pointer.prev.x, pointer.y - pointer.prev.y);
@@ -409,8 +441,7 @@ function Worm(code, delay = 0){
         '`': () => {
             let y = stack.pop();
             let x = stack.pop();
-            pointer.x = x;
-            pointer.y = y;
+            pointer.setPos(x, y);
             pointer.prev = {x: pointer.x, y: pointer.y};
         },
         '!': () => {
@@ -442,8 +473,7 @@ function Worm(code, delay = 0){
                     } 
                 }
             }
-            pointer.x = target.x;
-            pointer.y = target.y;
+            pointer.setPos(x, y);
             pointer.prev = {x: pointer.x, y: pointer.y};
         },
         ':': () => {
@@ -547,6 +577,7 @@ function Worm(code, delay = 0){
     
     this.end = function(){
         worm.running = false;
+        worm.emit('end', worm.output);
     }
     
 }
@@ -572,6 +603,9 @@ function init(){
     //board.set(3,3,"f");
     //console.log(board.code);
     let worm = new Worm(source, args[1] || 200);
+    worm.on('test', ()=>{
+        log(chalk.yellow("wow!"))
+    });
     worm.init();
 }
 init();
