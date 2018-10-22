@@ -4,11 +4,15 @@ const chalk = require('chalk');
 
 const log = console.log;
 
+
+let charMode = false;
+
 function init(){
 
     //grab cli arguments
     let args = process.argv.slice(2);
-    let source = '';
+    let source = '',
+        delay = 0;
     log(args);
     //if -c or --code flag is passed, ignore file input
     if(args.includes("-c") || args.includes("--code")){
@@ -21,10 +25,16 @@ function init(){
             console.log("could not find file", e);
         }
     }
+    if(args.includes("-d") || args.includes("--delay")){
+        let index = args.findIndex(a => a === "-d" || a === "--delay");
+        delay = args[index + 1];
+    } else {
+        delay = 0;
+    }
     
     log(source);
     
-    let worm = new Worm(source, args[1] || 200);
+    let worm = new Worm(source, delay);
     worm.on('instruction', (char, name, pos) => {
         //log(chalk.blueBright(char));
         let inst = char === worm.EDGE ? '░' : char;
@@ -35,8 +45,45 @@ function init(){
     });
     worm.on('end', (output) => {
         log(chalk`{magenta ::done!::  }{keyword('orange') ${output}}`);
-        log(chalk.greenBright(source))
+        log(chalk.greenBright(source));
+        process.stdin.emit('end');
+        process.exit(0);
     });
+    
+    worm.on('input', (type, cb) => {
+        if(type === "character"){
+            process.stdin.setRawMode(true);
+        } else {
+            process.stdin.setRawMode(false);
+        }
+        process.stdin.on('data', handler);
+        function handler(input){
+            if(input[0] === 3){
+                process.exit(0);
+            }
+            if(charMode){
+                charMode = false;
+                process.stdin.setRawMode(false);
+            }
+            log(input);
+            log([...input]);
+            cb(input.toString());
+            process.stdin.removeListener('data', handler);
+        }
+    });
+    
+    
     worm.init();
+    
+    process.on('SIGWINCH', (a) => {
+        log("wwwwwwwwwwwwwwwwwww", a)
+    });
+    
+    process.on('SIGINT', function () {
+        process.exit(0);
+    });
+    
+    //process.stdin.setRawMode(true);
+    
 }
 init();

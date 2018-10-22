@@ -59,6 +59,7 @@ function Worm(code, delay = 0){
         this.set = function(x, y, v){
             let oldBoard = this.code.map(a => a.slice());
             let oldChar = this.get(x, y);
+            v = String.fromCharCode(v || 32);
             //check if outside bounds
             if(this.get(x, y) === EDGE){
                 //create new lines if lower than bottom
@@ -93,7 +94,7 @@ function Worm(code, delay = 0){
         }
         
         this.pop = function(){
-            return this.current.values.pop();
+            return this.current.values.pop() || 0;
         }
         
         this.push = function(v){
@@ -202,6 +203,7 @@ function Worm(code, delay = 0){
             } else {
                 worm.run(this.instruction);
             }
+            this.prev = {x: this.x, y: this.y};
         }
         this.move = function(){
             let angle = toAngle(this.dir);
@@ -224,7 +226,7 @@ function Worm(code, delay = 0){
             }
             
             worm.emit('positionUpdate', {x: this.x, y: this.y}, {x: this.prev.x, y: this.prev.y});
-            this.prev = {x: this.x, y: this.y};
+            
             //let inst = this.instruction === EDGE ? '░' : this.instruction;
             //log(chalk`{green ${inst}}    {cyan (${this.x}, ${this.y})}  |  {red (${this.dir.x}, ${this.dir.y})}${new Array(8 - `${this.dir.x}, ${this.dir.y}`.length).join(' ')}: {magenta ${angle}}`);
         }
@@ -562,10 +564,20 @@ function Worm(code, delay = 0){
             worm.printNum(x);
         },
         'r': () => {
-            //
+            worm.running = false;
+            worm.emit('input', 'character', function(char){
+                worm.stack.push(parseChar(char));
+                worm.running = true;
+                worm.update(true);
+            });
         },
         't': () => {
-            //
+            worm.running = false;
+            worm.emit('input', 'number', function(num){
+                worm.stack.push(parseNum(num));
+                worm.running = true;
+                worm.update(true);
+            });
         },
     }
     
@@ -573,8 +585,10 @@ function Worm(code, delay = 0){
         instructions[instruction]();
     }
     
-    this.update = function(){
-        worm.pointer.execute();
+    this.update = function(move){
+        if(!move){
+            worm.pointer.execute();
+        }
         if(worm.running){
             worm.pointer.move();
             if(delay){
@@ -605,8 +619,8 @@ function toAngle(x, y){
 }
 
 function toDir(a){
-    return {x: mod(Math.round(Math.cos((Math.PI/4) * a)), 8),
-            y: mod(Math.round(Math.sin((Math.PI/4) * a)), 8)};
+    return {x: Math.round(Math.cos((Math.PI/4) * a)),
+            y: Math.round(Math.sin((Math.PI/4) * a))};
 }
 
 function parseChar(item){
