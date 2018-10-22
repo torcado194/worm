@@ -146,6 +146,7 @@ function Worm(code, delay = 0){
         this.y = y;
         this.dir = {x: 1, y: 0};
         this.prev = {x: 0, y: 0};
+        this.origDir = {x: 1, y: 0};
         this.instruction = '';
         this.wallMode = false;
         this.charString = [];
@@ -178,13 +179,26 @@ function Worm(code, delay = 0){
             worm.emit('edgeDetect', {x: this.x, y: this.y});
         }
         
+        this.checkWrap = function(){
+            let angle = toAngle(this.origDir);
+            if(angle === 0 || angle === 4){
+                while(board.code[this.y].length === 0){
+                    this.y = (this.y + 1) % (board.bottom + 1);
+                    worm.emit('edgeDetect', {x: this.x, y: this.y});
+                }
+            }
+            
+        }
+        
         this.execute = function(){
             this.instruction = board.get(this.x, this.y);
+            
+            this.origDir = {x: this.dir.x, y: this.dir.y};
             
             worm.emit('instruction', this.instruction, null, {x: this.x, y: this.y});
             
             if(this.instruction === EDGE){
-                log("b")
+                //log("b")
             } else if(this.charStringing) {
                 if(this.instruction === '"'){
                     worm.run(this.instruction);
@@ -206,7 +220,7 @@ function Worm(code, delay = 0){
             this.prev = {x: this.x, y: this.y};
         }
         this.move = function(){
-            let angle = toAngle(this.dir);
+            let angle = this.getAngle();
             if(angle === 0 || angle === 4){
                 this.x += this.dir.x;
                 this.checkX();
@@ -224,6 +238,7 @@ function Worm(code, delay = 0){
                 this.x += this.dir.x;
                 this.checkX();
             }
+            this.checkWrap();
             
             worm.emit('positionUpdate', {x: this.x, y: this.y}, {x: this.prev.x, y: this.prev.y});
             
@@ -258,7 +273,7 @@ function Worm(code, delay = 0){
         }
         
         this.rotate = function(a){
-            this.setAngle(toAngle(this.dir) + a);
+            this.setAngle(this.getAngle() + a);
         }
         
         this.getAngle = function(){
