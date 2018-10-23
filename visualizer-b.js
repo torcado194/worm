@@ -111,13 +111,13 @@ function borders(a){
         right = padding + 1;
     //let horizontal = (new Array(w - (left + right) - 2)).fill(chalk.cyan('═'));
     let horizontal = fill(w - (left + right) - 2, '═', borderColor);
-    a.splice(-(w*h) + left, w - (right + left), borderColor('╔'), ...horizontal, borderColor('╗')); //top
-    a.splice(-w + left, w - (right + left), borderColor('╚'), ...horizontal, borderColor('╝')); //bottom
+    a.splice(-(w*h) + left, w - (right + left), ('╔'), ...horizontal, ('╗')); //top
+    a.splice(-w + left, w - (right + left), ('╚'), ...horizontal, ('╝')); //bottom
     for(let i = a.length - (w * (h - 1)); i < a.length - w; i++){
         if(i % w === left){
-            a.splice(i, 1, borderColor('║'));
+            a.splice(i, 1, ('║'));
         } else if(i % w === w - 1 - right){
-            a.splice(i, 1, borderColor('║'));
+            a.splice(i, 1, ('║'));
             
         }
     }
@@ -154,13 +154,13 @@ function placeCode(a){
     let beginning = fromEnd(cornerX + cornerY * w);
     //for(let i = fromEnd(cornerX + cornerY * w); i < fromEnd((cornerX + codeWidth) + (cornerY + codeHeight) * w); i++){
     for(let i = 0; i < codeHeight; i++){
-        a.splice(beginning + (i*w), code[i].length, ...(code[i].map(v => chalk.green(v))));
+        a.splice(beginning + (i*w), code[i].length, ...(code[i].map(v => (v))));
     }
     a.splice(beginning - w - 1, code[0].length + 2, ...(fill(code[0].length + 2, '░', edgeColor)));
     a.splice(beginning + (w*codeHeight) - 1, code[code.length-1].length + 2, ...(fill(code[code.length-1].length + 2, '░', edgeColor)));
     //a.splice(beginning - w - 1, code[0].length + 2, ...(new Array(code[0].length + 2).fill(chalk.bgYellow(' '))));
     for(let i = 0; i < codeHeight; i++){
-        a.splice(beginning + (i*w) - 1, 1, edgeColor('░'));
+        a.splice(beginning + (i*w) - 1, 1, ('░'));
         let l = 1;
         if(i === 0){
             l = Math.max(1, code[i+1].length - (code[i].length - 1));
@@ -169,7 +169,7 @@ function placeCode(a){
         } else {
             l = Math.max(1, Math.max(code[i-1].length - (code[i].length - 1), code[i+1].length - (code[i].length - 1)));
         }
-        a.splice(beginning + (i*w) + code[i].length, l, ...fill(l, '░', edgeColor));
+        a.splice(beginning + (i*w) + code[i].length, l, ...fill(l, '░', ));
     }
     
     return a;
@@ -184,17 +184,17 @@ function dashboard(a){
     
     let beginning = fromEnd(cornerX + cornerY * w);
     
-    a.splice(beginning, dashboardWidth, dashboardColor('╔'), ...fill(dashboardWidth - 2, '═', dashboardColor), dashboardColor('╗'));
-    a.splice(beginning + w * (dashboardHeight - 1), dashboardWidth, dashboardColor('╚'), ...fill(dashboardWidth - 2, '═', dashboardColor), dashboardColor('╝'));
+    a.splice(beginning, dashboardWidth, ('╔'), ...fill(dashboardWidth - 2, '═', ), ('╗'));
+    a.splice(beginning + w * (dashboardHeight - 1), dashboardWidth, ('╚'), ...fill(dashboardWidth - 2, '═', ), ('╝'));
     for(let i = 0; i < dashboardHeight - 2; i++){
-        a.splice(beginning + (w * (i + 1)), 1, dashboardColor('║'));
-        a.splice(beginning + (w * (i + 1)) + dashboardWidth - 1, 1, dashboardColor('║'));
+        a.splice(beginning + (w * (i + 1)), 1, ('║'));
+        a.splice(beginning + (w * (i + 1)) + dashboardWidth - 1, 1, ('║'));
     }
     let posText = `(${pointer.x > 9 ? '' : ' '}${pointer.x},${pointer.y > 9 ? '' : ' '}${pointer.y})`
     let dirText = `(${pointer.dir.x < 0 ? '' : ' '}${pointer.dir.x},${pointer.dir.y < 0 ? '' : ' '}${pointer.dir.y}) `
     //let angleText = `${pointer.getAngle()} `;
     let angleText = `→ `;
-    let info = [...posText.split('').map(v => chalk.blueBright(v)),' ',chalk.gray('•'),' ', ...dirText.split('').map(v => chalk.redBright(v)), ...angleText.split('').map(v => chalk.magentaBright(v))];
+    let info = [...posText.split('').map(v => (v)),' ',('•'),' ', ...dirText.split('').map(v => (v)), ...angleText.split('').map(v => (v))];
     a.splice(beginning + w + 2, info.length, ...info);
     
     return a;
@@ -203,8 +203,8 @@ function dashboard(a){
 function pointer(a){
     let pointer = worm.pointer;
     let loc = fromEnd((codeCornerX + pointer.x) + (codeCornerY + pointer.y) * w);
-    log(a[a.length + loc])
-    a.splice(loc, 1, chalk.bgRed.black(pointer.instruction));
+    //log(a[a.length + loc])
+    a.splice(loc, 1, pointer.instruction);
 }
 
 function fromEnd(n){
@@ -212,5 +212,5 @@ function fromEnd(n){
 }
 
 function fill(n, char, color){
-    return (new Array(n)).fill(color(char));
+    return (new Array(n)).fill(char);
 }

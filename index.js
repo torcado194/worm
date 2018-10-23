@@ -27,16 +27,20 @@ function Worm(code, input, delay = 0){
         board = worm.board = new Board(worm.source);
         stack = worm.stack = new Stack();
         pointer = worm.pointer = new Pointer();
-        if(typeof worm.input === 'string'){
-            worm.input = worm.input.split('');
+        if(worm.input){
+            if(typeof worm.input === 'string'){
+                worm.input = worm.input.split('');
+            }
+            worm.input.reverse();
         }
-        worm.input.reverse();
         worm.running = true;
         worm.emit('test');
-        
+        pointer.instruction = board.get(pointer.x, pointer.y);
         log(worm.board.code);
         
-        this.update();
+        if(delay !== 'step'){
+            this.update();
+        }
     }
     
     
@@ -608,20 +612,25 @@ function Worm(code, input, delay = 0){
     }
     
     this.update = function(move){
-        if(!move){
+        if(delay === 'step'){
             worm.pointer.execute();
-        }
-        if(worm.running){
             worm.pointer.move();
-            if(delay){
-                setTimeout(()=>{
-                    worm.update();
-                }, delay);
-            } else {
-                worm.update();
-            }
         } else {
-            //log(chalk.keyword('orange')(worm.output.join('')));
+            if(!move){
+                worm.pointer.execute();
+            }
+            if(worm.running){
+                worm.pointer.move();
+                if(delay && typeof delay === 'number'){
+                    setTimeout(()=>{
+                        worm.update();
+                    }, delay);
+                } else {
+                    worm.update();
+                }
+            } else {
+                //log(chalk.keyword('orange')(worm.output.join('')));
+            }
         }
     }
     
