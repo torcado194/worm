@@ -17,6 +17,8 @@ let worm;
 let codeCornerX = 0,
     codeCornerY = 0;
 
+let screen = [],
+    prevScreen = [];
 
 let c = {
     'border': 'cyan',
@@ -75,6 +77,16 @@ function inputHandler(input){
     if(char === 'z'){
         process.stdout.write('z');
     }
+    if(char === 'x'){
+        process.stdout.write('123');
+    }
+    
+    if(char === 'c'){
+        clearScreen();
+    }
+    if(char === 'p'){
+        draw(true);
+    }
 }
 
 let flags = {
@@ -115,8 +127,8 @@ function init(){
 }
 
 
-function draw(){
-    let a = []
+function draw(p){
+    let a = screen = [];
     startPadding(a);
     borders(a);
     trim(a);
@@ -124,7 +136,78 @@ function draw(){
     pointer(a);
     dashboard(a);
     
-    print(a);
+    if(p){
+        print(a);
+    } else {
+        render(a, prevScreen);
+    }
+    
+    prevScreen = [...screen];
+}
+
+function render(screen, prev){
+    if(prev.length === 0){
+        clearScreen();
+        print(screen);
+        return;
+    }
+    
+    let out = process.stdout;
+    let line = '',
+        lineStart = 0,
+        fg = false,
+        bg = false;
+    for(let i = 0; i < screen.length; i++){
+        let a = screen[i],
+            b = prev[i];
+        if(a === b){
+            if(line.length !== 0){
+                out.cursorTo(lineStart % w, Math.floor(lineStart / w)) //convert to x,y
+                out.write(line);
+                line = '';
+            }
+            continue;
+        } else {
+            if(line.length === 0){
+                lineStart = i;
+            }
+            if(typeof a !== 'object'){
+                if(a !== ' '){
+                    if(fg){
+                        line += '[0m' //won't reset background?
+                        fg = false;
+                    }
+                }
+                if(bg){
+                    line += '[49m'
+                    bg = false;
+                }
+                line += a;
+                continue;
+            } else {
+                let color = Object.keys(a)[0];
+                if(color.includes('.')){
+                    fg = true;
+                    bg = true;
+                } else if(color.includes('bg')){
+                    bg = true;
+                    if(fg){
+                        line += '[0m'
+                        fg = false;
+                    }
+                } else {
+                    fg = true;
+                    if(bg){
+                        line += '[49m'
+                        bg = false;
+                    }
+                }
+                line += getAnsi(color);
+                line += Object.values(a)[0];
+            }
+        }
+    }
+    
 }
 
 function print(a){
@@ -161,8 +244,16 @@ function print(a){
                 bg = true;
             } else if(color.includes('bg')){
                 bg = true;
+                if(fg){
+                    text += '[0m'
+                    fg = false;
+                }
             } else {
                 fg = true;
+                if(bg){
+                    text += '[49m'
+                    bg = false;
+                }
             }
             text += getAnsi(color);
             text += Object.values(t)[0];
@@ -176,8 +267,13 @@ function getAnsi(color){
     return (chalk`{${color}  }`).split(' ')[0];
 }
 
+function clearScreen(){
+    process.stdout.cursorTo(0,0);
+    process.stdout.clearScreenDown();
+}
+
 function startPadding(a){
-    let pad = (new Array(w * (h+3))).fill(' ');
+    let pad = (new Array(w * (h))).fill(' ');
     a.splice(0, 0, ...pad);
     return a;
 }
@@ -282,7 +378,7 @@ function dashboard(a){
 function pointer(a){
     let pointer = worm.pointer;
     let loc = fromEnd((codeCornerX + pointer.x) + (codeCornerY + pointer.y) * w);
-    log(a[a.length + loc])
+    //log(a[a.length + loc])
     a.splice(loc, 1, {[c['pointer'] + '.black']: pointer.instruction });
 }
 
