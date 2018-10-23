@@ -55,8 +55,7 @@ function init(){
     worm.on('instruction', (char, name, pos) => {
         //log(chalk.blueBright(char));
         let inst = char === worm.EDGE ? '░' : char;
-        log(chalk.keyword('pink')('haha'))
-        log(chalk`{green ${inst}}    {cyan (${pos.x}, ${pos.y})}{gray   |  }{red (${worm.pointer.dir.x}, ${worm.pointer.dir.y})}${new Array(8 - `${worm.pointer.dir.x}, ${worm.pointer.dir.y}`.length).join(' ')}: {magenta ${worm.pointer.getAngle()}}{gray   |  }{yellow ${worm.stack.values}}{redBright  ${worm.input}}`);
+        log(chalk`{green ${inst}}    {cyan (${pos.x}, ${pos.y})}{gray   |  }{red (${worm.pointer.dir.x}, ${worm.pointer.dir.y})}${new Array(8 - `${worm.pointer.dir.x}, ${worm.pointer.dir.y}`.length).join(' ')}: {magenta ${worm.pointer.getAngle()}}{gray   |  }{yellow ${worm.stack.values}}{redBright  [${worm.input}]}`);
     });
     worm.on('output', (data) => {
         log(chalk.keyword('orange')(data));
@@ -92,10 +91,6 @@ function init(){
     
     
     worm.init();
-    
-    process.on('SIGWINCH', (a) => {
-        log("wwwwwwwwwwwwwwwwwww", a)
-    });
     
     process.on('SIGINT', function () {
         process.exit(0);
