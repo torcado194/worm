@@ -162,6 +162,7 @@ function Worm(code, input, delay = 0){
         this.charStringing = false;
         this.numString = [];
         this.numStringing = false;
+        this.skipMove = false;
         
         this.checkX = function(){
             if(board.get(this.x, this.y) === EDGE){
@@ -229,6 +230,11 @@ function Worm(code, input, delay = 0){
             this.prev = {x: this.x, y: this.y};
         }
         this.move = function(){
+            if(this.skipMove){
+                this.skipMove = false;
+                return;
+            }
+            
             let angle = this.getAngle();
             if(angle === 0 || angle === 4){
                 this.x += this.dir.x;
@@ -453,12 +459,14 @@ function Worm(code, input, delay = 0){
             pointer.setAngle(angle + 1);
             pointer.move();
             pointer.setAngle(angle);
+            pointer.skipMove = true;
         },
         'y': () => {
             let angle = toAngle(pointer.x - pointer.prev.x, pointer.y - pointer.prev.y);
             pointer.setAngle(angle - 1);
             pointer.move();
             pointer.setAngle(angle);
+            pointer.skipMove = true;
         },
         '&': () => {
             pointer.rotate(1);
