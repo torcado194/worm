@@ -227,7 +227,9 @@ function Worm(code, input, delay = 0){
             } else {
                 worm.run(this.instruction);
             }
-            this.prev = {x: this.x, y: this.y};
+            if(!this.skipMove){
+                this.prev = {x: this.x, y: this.y};
+            }
         }
         this.move = function(){
             if(this.skipMove){
@@ -243,18 +245,28 @@ function Worm(code, input, delay = 0){
                 this.y += this.dir.y;
                 this.checkY();
             } else if(angle === 1 || angle === 5){
-                this.x += this.dir.x;
-                this.checkX();
-                this.y += this.dir.y;
-                this.checkY();
+                if(board.get(this.x + this.dir.x, this.y + this.dir.y) === EDGE){
+                    this.x += this.dir.x;
+                    this.checkX();
+                    this.y += this.dir.y;
+                    this.checkY();
+                } else {
+                    this.x += this.dir.x;
+                    this.y += this.dir.y;
+                }
             } else if(angle === 3 || angle === 7){
-                this.y += this.dir.y;
-                this.checkY();
-                this.x += this.dir.x;
-                this.checkX();
+                if(board.get(this.x + this.dir.x, this.y + this.dir.y) === EDGE){
+                    this.y += this.dir.y;
+                    this.checkY();
+                    this.x += this.dir.x;
+                    this.checkX();
+                } else {
+                    this.x += this.dir.x;
+                    this.y += this.dir.y;
+                }
             }
             this.checkWrap();
-            
+            this.instruction = board.get(this.x, this.y);
             worm.emit('positionUpdate', {x: this.x, y: this.y}, {x: this.prev.x, y: this.prev.y});
             
             //let inst = this.instruction === EDGE ? '░' : this.instruction;
@@ -505,15 +517,18 @@ function Worm(code, input, delay = 0){
             for(let y = 0; y < board.code.length; y++){
                 let line = board.code[y];
                 for(let x = 0; x < line.length; x++){
-                    let dist = Math.abs((x - current.x) + (y - current.y));
-                    if(dist < minDist){
-                        minDist = dist;
-                        target = {x, y};
-                    } 
+                    if(board.code[y][x] === 'o' && (x !== current.x && y !== current.y)){
+                        let dist = Math.abs((x - current.x) + (y - current.y));
+                        if(dist < minDist){
+                            minDist = dist;
+                            target = {x, y};
+                        } 
+                    }
                 }
             }
             pointer.setPos(target.x, target.y);
             pointer.prev = {x: pointer.x, y: pointer.y};
+            pointer.skipMove = true;
         },
         ':': () => {
             stack.duplicate();

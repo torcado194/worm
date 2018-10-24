@@ -3,7 +3,15 @@ const fs = require('fs');
 const chalk = require('chalk');
 
 const log = console.log;
-log('[93mwow![39m')
+//log('[93mwow![39m')
+/*log(chalk.bgRed.black('haha!'))
+log('[0m[39m[49m[41m[30m' + 'ok!' + '[0m')
+log('\033[31;42m' + 'yea' + '\033[39;49m')*/
+
+
+//log('[30m[39m[30m[41m' + 'ok!' + '[49m[39m')
+
+log('\033[0;0m\033[30;41;m' + 'bbb' + '\033[0;0m');
 
 let w = 0,
     h = 0;
@@ -20,14 +28,45 @@ let codeCornerX = 0,
 let screen = [],
     prevScreen = [];
 
+let arrows = [
+    '→',
+    '↘',
+    '↓',
+    '↙',
+    '←',
+    '↖',
+    '↑',
+    '↗',
+];
+
+let instColor = {
+    '^': 'blueBright',
+    '>': 'blueBright',
+    '<': 'blueBright',
+    '/': 'blueBright',
+    '\\': 'blueBright',
+    '_': 'blueBright',
+    '|': 'blueBright',
+    '&': 'keyword("orange")',
+    'a': 'green',
+    'b': 'green',
+    'e': 'green',
+    '1': 'green',
+    'x': 'cyan',
+    'y': 'cyan',
+    '!': 'redBright',
+}
+
 let c = {
     'border': 'cyan',
     'dashBorder': 'green',
     'dashPos': 'blueBright',
     'dashDir': 'redBright',
     'dashAngle': 'magentaBright',
+    'controls': 'yellowBright',
     'edge': 'gray',
-    'pointer': 'bgRed',
+    'pointer': 'bgRed.black',
+    'nextPointer': 'bgMagenta',
 }
 
 /*
@@ -174,7 +213,7 @@ function render(screen, prev){
             if(typeof a !== 'object'){
                 if(a !== ' '){
                     if(fg){
-                        line += '[0m' //won't reset background?
+                        line += '[39m' //won't reset background?
                         fg = false;
                     }
                 }
@@ -189,10 +228,12 @@ function render(screen, prev){
                 if(color.includes('.')){
                     fg = true;
                     bg = true;
+                    //log(getAnsi(color) + Object.values(a)[0])
+                    debugger;
                 } else if(color.includes('bg')){
                     bg = true;
                     if(fg){
-                        line += '[0m'
+                        line += '[39m'
                         fg = false;
                     }
                 } else {
@@ -202,8 +243,8 @@ function render(screen, prev){
                         bg = false;
                     }
                 }
-                line += getAnsi(color);
-                line += Object.values(a)[0];
+                line += '[39m' + getAnsi(color);
+                line += Object.values(a)[0] === worm.EDGE ? ' ' : Object.values(a)[0];
             }
         }
     }
@@ -216,10 +257,10 @@ function print(a){
     
     //slow color
     //a = a.map(v => chalk`{${'green'} ${Object.values(v)[0]}}`);
-    //a = a.map(v => typeof v === 'object' ? chalk`{${Object.keys(v)[0]} ${Object.values(v)[0]}}` : v);
-    
+    a = a.map(v => typeof v === 'object' ? chalk`{${Object.keys(v)[0]} ${Object.values(v)[0]}}` : v);
+    let text = a.join('');
     //optimized color
-    let text = '';
+    /*let text = '';
     let fg = false,
         bg = false;
     for(let i = 0; i < a.length; i++){
@@ -258,7 +299,7 @@ function print(a){
             text += getAnsi(color);
             text += Object.values(t)[0];
         }
-    }
+    }*/
     
     log(text);
 }
@@ -329,7 +370,7 @@ function placeCode(a){
     let beginning = fromEnd(cornerX + cornerY * w);
     //for(let i = fromEnd(cornerX + cornerY * w); i < fromEnd((cornerX + codeWidth) + (cornerY + codeHeight) * w); i++){
     for(let i = 0; i < codeHeight; i++){
-        a.splice(beginning + (i*w), code[i].length, ...(code[i].map(v => ({'green': v }))));
+        a.splice(beginning + (i*w), code[i].length, ...(code[i].map(v => ({[instColor[v] || 'white']: v }))));
     }
     a.splice(beginning - w - 1, code[0].length + 2, ...(fill(code[0].length + 2, '░', c['edge'])));
     a.splice(beginning + (w*codeHeight) - 1, code[code.length-1].length + 2, ...(fill(code[code.length-1].length + 2, '░', c['edge'])));
@@ -366,11 +407,20 @@ function dashboard(a){
         a.splice(beginning + (w * (i + 1)) + dashboardWidth - 1, 1, {[c['dashBorder']]: '║' });
     }
     let posText = `(${pointer.x > 9 ? '' : ' '}${pointer.x},${pointer.y > 9 ? '' : ' '}${pointer.y})`
-    let dirText = `(${pointer.dir.x < 0 ? '' : ' '}${pointer.dir.x},${pointer.dir.y < 0 ? '' : ' '}${pointer.dir.y}) `
+    let dirText = `(${pointer.dir.x < 0 ? '' : ' '}${pointer.dir.x},${pointer.dir.y < 0 ? '' : ' '}${pointer.dir.y})`
     //let angleText = `${pointer.getAngle()} `;
-    let angleText = `→ `;
-    let info = [...posText.split('').map(v => ({[c['dashPos']]: v })), ' ', {'gray': '•'}, ' ', ...dirText.split('').map(v => ({[c['dashDir']]: v })), ...angleText.split('').map(v => ({[c['dashAngle']]: v }))];
+    let angleText = arrows[pointer.getAngle()];
+    let info = [...posText.split('').map(v => ({[c['dashPos']]: v })), ' ', {'gray': '•'}, ' ', ...dirText.split('').map(v => ({[c['dashDir']]: v })), ' ', ...angleText.split('').map(v => ({[c['dashAngle']]: v }))];
+    let step = `[≥]`;
+    let play = `[►`;
+    let pause = `║`;
+    let stop = `■]`;
+    let controls = [...escape(step, c['controls']), ...fill(2, ' '), ...escape(play, c['controls']), ' ', ' ', ...escape(stop, c['controls'])]
+    //let controls = [...step.split('').map(v => ({[c['yellowBright']]: v })), ...step.split('').map(v => ({[c['yellowBright']]: v }))]
     a.splice(beginning + w + 2, info.length, ...info);
+    a.splice(beginning + w + dashboardWidth - controls.length - 2, controls.length, ...controls);
+    
+    a.splice(beginning - w * 2, worm.stack.values.join(',').length + 2, ...escape('[' + worm.stack.values.join(',') + ']', 'keyword("orange")'));
     
     return a;
 }
@@ -379,7 +429,7 @@ function pointer(a){
     let pointer = worm.pointer;
     let loc = fromEnd((codeCornerX + pointer.x) + (codeCornerY + pointer.y) * w);
     //log(a[a.length + loc])
-    a.splice(loc, 1, {[c['pointer'] + '.black']: pointer.instruction });
+    a.splice(loc, 1, {[c['pointer']]: pointer.instruction });
 }
 
 function fromEnd(n){
@@ -387,5 +437,13 @@ function fromEnd(n){
 }
 
 function fill(n, char, color){
-    return (new Array(n)).fill({[color]: char });
+    if(color){
+        return (new Array(n)).fill({[color]: char });
+    } else {
+        return (new Array(n)).fill(char);
+    }
+}
+
+function escape(str, color){
+    return str.split('').map(v => ({[color]: v }));
 }
