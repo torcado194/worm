@@ -199,8 +199,11 @@ function render(screen, prev){
     for(let i = 0; i < screen.length; i++){
         let a = screen[i],
             b = prev[i];
-        if(a === b){
+        if(same(a, b)){
             if(line.length !== 0){
+                if(Math.floor(lineStart / w) < 4){
+                    debugger;
+                }
                 out.cursorTo(lineStart % w, Math.floor(lineStart / w)) //convert to x,y
                 out.write(line);
                 line = '';
@@ -225,28 +228,45 @@ function render(screen, prev){
                 continue;
             } else {
                 let color = Object.keys(a)[0];
-                if(color.includes('.')){
-                    fg = true;
-                    bg = true;
-                    //log(getAnsi(color) + Object.values(a)[0])
-                    debugger;
-                } else if(color.includes('bg')){
-                    bg = true;
-                    if(fg){
-                        line += '[39m'
-                        fg = false;
-                    }
-                } else {
-                    fg = true;
-                    if(bg){
-                        line += '[49m'
-                        bg = false;
-                    }
+                
+                if(bg){
+                    line += '[49m';
+                    bg = false;
                 }
-                line += '[39m' + getAnsi(color);
+                
+                let hasFG = false,
+                    hasBG = false;
+                if(color.includes('.')){
+                    hasFG = true;
+                    hasBG = true;
+                } else if(color.includes('bg')){
+                    hasBG = true;
+                } else {
+                    hasFG = true;
+                }
+                if(hasFG && color !== fg){
+                    line += '[39m';
+                    fg = color;
+                }
+                if(hasBG){
+                    bg = true;
+                }
+                /*if(hasBG){
+                    line += '[49m';
+                    debugger;
+                    bg = false;
+                }*/
+                line += getAnsi(color);
                 line += Object.values(a)[0] === worm.EDGE ? ' ' : Object.values(a)[0];
             }
         }
+    }
+    out.cursorTo(0, h);
+    out.write('[39m[49m');
+    
+    
+    function same(a, b){
+        return Object.keys(a)[0] == Object.keys(b)[0] && Object.values(a)[0] == Object.values(b)[0];
     }
     
 }
