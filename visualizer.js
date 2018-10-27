@@ -3,15 +3,6 @@ const fs = require('fs');
 const chalk = require('chalk');
 
 const log = console.log;
-//log('[93mwow![39m')
-/*log(chalk.bgRed.black('haha!'))
-log('[0m[39m[49m[41m[30m' + 'ok!' + '[0m')
-log('\033[31;42m' + 'yea' + '\033[39;49m')*/
-
-
-//log('[30m[39m[30m[41m' + 'ok!' + '[49m[39m')
-
-log('\033[0;0m\033[30;41;m' + 'bbb' + '\033[0;0m');
 
 let w = 0,
     h = 0;
@@ -28,6 +19,8 @@ let codeCornerX = 0,
 let screen = [],
     prevScreen = [];
 
+let simpleChars = false;
+
 let arrows = [
     '→',
     '↘',
@@ -37,6 +30,17 @@ let arrows = [
     '↖',
     '↑',
     '↗',
+];
+
+let arrowsSimple = [
+    '→',
+    '┘',
+    '↓',
+    '└',
+    '←',
+    '┌',
+    '↑',
+    '┐',
 ];
 
 let instColor = {
@@ -66,7 +70,7 @@ let c = {
     'controls': 'yellowBright',
     'edge': 'gray',
     'pointer': 'bgRed.black',
-    'nextPointer': 'bgMagenta',
+    'nextPointer': 'bgMagenta.black',
 }
 
 /*
@@ -111,6 +115,10 @@ function inputHandler(input){
     }
     if(input == '\u001B\u005B\u0044'){
         process.stdout.moveCursor(-1, 0);
+    }
+    
+    if(input == '\u0009'){
+        simpleChars = !simpleChars;
     }
     
     if(char === 'z'){
@@ -429,13 +437,22 @@ function dashboard(a){
     let posText = `(${pointer.x > 9 ? '' : ' '}${pointer.x},${pointer.y > 9 ? '' : ' '}${pointer.y})`
     let dirText = `(${pointer.dir.x < 0 ? '' : ' '}${pointer.dir.x},${pointer.dir.y < 0 ? '' : ' '}${pointer.dir.y})`
     //let angleText = `${pointer.getAngle()} `;
-    let angleText = arrows[pointer.getAngle()];
+    let angleText = simpleChars ? arrowsSimple[pointer.getAngle()] : arrows[pointer.getAngle()];
     let info = [...posText.split('').map(v => ({[c['dashPos']]: v })), ' ', {'gray': '•'}, ' ', ...dirText.split('').map(v => ({[c['dashDir']]: v })), ' ', ...angleText.split('').map(v => ({[c['dashAngle']]: v }))];
-    let step = `[≥]`;
+//    let edit = `[✍]`;
+//    let edit = `[▒]`;
+//    let edit = `[⛆]`;
+//    let edit = `[╱]`;
+    let edit = `[√]`;
+//    let eventStep = `[‣`;
+    let eventStep = `[∙`;
+    let halfStep = `⠆`;
+//    let fullStep = `≥]`;
+    let fullStep = `ⵗ]`;
     let play = `[►`;
     let pause = `║`;
     let stop = `■]`;
-    let controls = [...escape(step, c['controls']), ...fill(2, ' '), ...escape(play, c['controls']), ' ', ' ', ...escape(stop, c['controls'])]
+    let controls = [...escape(edit, c['controls']), ...fill(2, ' '), ...escape(eventStep, c['controls']), ' ', ...escape(halfStep, c['controls']), ' ', ...escape(fullStep, c['controls']), ...fill(2, ' '), ...escape(play, c['controls']), ...fill(2, ' '), ...escape(stop, c['controls'])]
     //let controls = [...step.split('').map(v => ({[c['yellowBright']]: v })), ...step.split('').map(v => ({[c['yellowBright']]: v }))]
     a.splice(beginning + w + 2, info.length, ...info);
     a.splice(beginning + w + dashboardWidth - controls.length - 2, controls.length, ...controls);
@@ -450,6 +467,11 @@ function pointer(a){
     let loc = fromEnd((codeCornerX + pointer.x) + (codeCornerY + pointer.y) * w);
     //log(a[a.length + loc])
     a.splice(loc, 1, {[c['pointer']]: pointer.instruction });
+    
+    loc += pointer.dir.x;
+    loc += pointer.dir.y * w;
+    let char = worm.board.get({x: pointer.x + pointer.dir.x, y: pointer.y + pointer.dir.y});
+    a.splice(loc, 1, {[c['nextPointer']]: char === worm.EDGE ? '░' : char });
 }
 
 function fromEnd(n){

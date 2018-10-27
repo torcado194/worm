@@ -57,6 +57,10 @@ function Worm(code, input, delay = 0){
         }
         this.parse();
         this.get = function(x, y){
+            if(y === undefined){
+                y = x.y;
+                x = x.x;
+            }
             //return edge if outside bounds
             if(this.code[y] == undefined || this.code[y][x] === undefined){
                 return EDGE;
@@ -91,6 +95,24 @@ function Worm(code, input, delay = 0){
             
             let newBoard = this.code.map(a => a.slice());
             worm.emit('boardUpdate', newBoard, oldBoard, [v], [oldChar]);
+        }
+        
+        this.getTop = function(column){
+            let top = 0;
+            for(let y = 0; y < this.code.length; y++){
+                if(this.code[y].length - 1 >= column){
+                    return y;
+                }
+            }
+        }
+        
+        this.getBottom = function(column){
+            let top = 0;
+            for(let y = this.code.length - 1; y >= 0; y--){
+                if(this.code[y].length - 1 >= column){
+                    return y;
+                }
+            }
         }
     }
     
@@ -179,9 +201,9 @@ function Worm(code, input, delay = 0){
         
         this.checkY = function(){
             if(board.get(this.x, this.y) === EDGE){
-                if(this.y < 0){
+                if(this.y < board.getTop(this.x)){
                     this.y = board.bottom;
-                } else if(this.y > board.bottom){
+                } else if(this.y > board.getBottom(this.x)){
                     this.y = 0;
                 }
             }
@@ -236,7 +258,7 @@ function Worm(code, input, delay = 0){
                 this.skipMove = false;
                 return;
             }
-            
+            this.origDir = {x: this.dir.x, y: this.dir.y};
             let angle = this.getAngle();
             if(angle === 0 || angle === 4){
                 this.x += this.dir.x;
