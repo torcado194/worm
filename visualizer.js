@@ -13,13 +13,17 @@ let source = '',
 
 let worm;
 
-let codeCornerX = 0,
-    codeCornerY = 0;
+let codeX = 0,
+    codeY = 0,
+    dashboardX = 0,
+    dashboardY = 0;
 
 let screen = [],
     prevScreen = [];
 
 let simpleChars = false;
+
+let pointerTrail = [];
 
 let arrows = [
     '→',
@@ -47,18 +51,69 @@ let instColor = {
     '^': 'blueBright',
     '>': 'blueBright',
     '<': 'blueBright',
+    'v': 'blueBright',
     '/': 'blueBright',
     '\\': 'blueBright',
     '_': 'blueBright',
     '|': 'blueBright',
-    '&': 'keyword("orange")',
-    'a': 'green',
-    'b': 'green',
-    'e': 'green',
-    '1': 'green',
     'x': 'cyan',
     'y': 'cyan',
+    'k': 'cyan',
+    '&': 'cyanBright',
+    '#': 'cyanBright',
+    'o': 'cyanBright',
     '!': 'redBright',
+    '?': 'red',
+    '.': 'red',
+    '0': 'green',
+    '1': 'green',
+    '2': 'green',
+    '3': 'green',
+    '4': 'green',
+    '5': 'green',
+    '6': 'green',
+    '7': 'green',
+    '8': 'green',
+    '9': 'green',
+    'a': 'green',
+    'b': 'green',
+    'c': 'green',
+    'd': 'green',
+    'e': 'green',
+    'f': 'green',
+    '+': 'yellowBright',
+    '-': 'yellowBright',
+    '*': 'yellowBright',
+    ',': 'yellowBright',
+    '%': 'yellowBright',
+    'l': 'yellowBright',
+    '(': 'yellowBright',
+    ')': 'yellowBright',
+    '=': 'yellowBright',
+    '"': 'redBright',
+    '\'': 'magentaBright',
+    ':': 'yellow',
+    '~': 'yellow',
+    '$': 'keyword("orange")',
+    '@': 'keyword("orange")',
+    '{': 'keyword("orange")',
+    '}': 'keyword("orange")',
+    '[': 'keyword("orange")',
+    ']': 'keyword("orange")',
+    'm': 'keyword("orange")',
+    'h': 'yellowBright',
+    'p': 'keyword("purple")',
+    'q': 'keyword("purple")',
+    'i': 'keyword("crimson")',
+    'j': 'keyword("crimson")',
+    'u': 'keyword("crimson")',
+    'n': 'keyword("crimson")',
+    'r': 'keyword("crimson")',
+    't': 'keyword("crimson")',
+    'w': 'magentaBright',
+    'g': 'redBright',
+    's': 'redBright',
+    ';': 'greenBright',
 }
 
 let c = {
@@ -138,6 +193,10 @@ function inputHandler(input){
     if(char === 'p'){
         draw(true);
     }
+    
+    if(char === 'v'){
+        worm.emit('continue');
+    }
 }
 
 let flags = {
@@ -171,7 +230,19 @@ function init(){
     
     worm = new Worm(source, input, 'step');
     
-    //worm.on('positionUpdate', draw);
+    worm.on('positionUpdate', (to, from) => {
+        pointerTrail.splice(0, 0, {x: from.x, y: from.y});
+    });
+    
+    /*worm.on('edgeDetect', pos => {
+        let a = [...prevScreen];
+        
+        let loc = fromEnd((codeX + pos.x) + (codeY + pos.y) * w);
+        let char = worm.board.get({x: pos.x, y: pos.y});
+        a.splice(loc, 1, {'bgCyanBright.black': char === worm.EDGE ? '░' : char });
+        render(a, prevScreen);
+        prevScreen = [...a];
+    });*/
     
     worm.init();
     resizeHandler();
@@ -181,11 +252,13 @@ function init(){
 function draw(p){
     let a = screen = [];
     startPadding(a);
-    borders(a);
     trim(a);
+    borders(a);
+    dashboard(a);
+    output(a);
     placeCode(a);
     pointer(a);
-    dashboard(a);
+    //trail(a);
     
     if(p){
         print(a);
@@ -358,7 +431,7 @@ function borders(a){
         bottom = padding,
         right = padding + 1;
     //let horizontal = (new Array(w - (left + right) - 2)).fill(chalk.cyan('═'));
-    let horizontal = fill(w - (left + right) - 2, '═', c['border']);
+    /*let horizontal = fill(w - (left + right) - 2, '═', c['border']);
     a.splice(-(w*h) + left, w - (right + left), {[c['border']]: '╔' }, ...horizontal, {[c['border']]: '╗' }); //top
     a.splice(-w + left, w - (right + left), {[c['border']]: '╚' }, ...horizontal, {[c['border']]: '╝' }); //bottom
     for(let i = a.length - (w * (h - 1)); i < a.length - w; i++){
@@ -368,8 +441,24 @@ function borders(a){
             a.splice(i, 1, {[c['border']]: '║' });
             
         }
-    }
+    }*/
+    makeBorder(a, 1, 0, w - 2, h - 0, c['border']);
     return a;
+}
+
+function makeBorder(a, x, y, width, height, color){
+    width -= 1;
+    height -= 1;
+    let horizontal = fill(width - 2, '═', color);
+    a.splice(fromEnd(x + (y * w)), horizontal.length + 2, {[color]: '╔' }, ...horizontal, {[color]: '╗' }); //top
+    a.splice(fromEnd(x + ((y + height) * w)), horizontal.length + 2, {[color]: '╚' }, ...horizontal, {[color]: '╝' }); //bottom
+    for(let i = a.length + fromEnd(x + ((y + 1) * w)); i < (y + height) * w; i++){
+        if(i % w === x){
+            a.splice(i, 1, {[color]: '║' });
+        } else if(i % w === x + width - 1){
+            a.splice(i, 1, {[color]: '║' });
+        }
+    }
 }
 
 function trim(a){
@@ -393,51 +482,59 @@ function placeCode(a){
     codeHeight = code.length;
     
     
-    let cornerX = centerX - Math.floor(codeWidth / 2),
-        cornerY = centerY - Math.floor(codeHeight / 2);
+    codeX = centerX - Math.floor(codeWidth / 2);
+    codeY = centerY - Math.floor(codeHeight / 2);
     
-    codeCornerX = cornerX;
-    codeCornerY = cornerY;
     
-    let beginning = fromEnd(cornerX + cornerY * w);
-    //for(let i = fromEnd(cornerX + cornerY * w); i < fromEnd((cornerX + codeWidth) + (cornerY + codeHeight) * w); i++){
+    let beginning = fromEnd(codeX + codeY * w);
+    
     for(let i = 0; i < codeHeight; i++){
         a.splice(beginning + (i*w), code[i].length, ...(code[i].map(v => ({[instColor[v] || 'white']: v }))));
     }
     a.splice(beginning - w - 1, code[0].length + 2, ...(fill(code[0].length + 2, '░', c['edge'])));
     a.splice(beginning + (w*codeHeight) - 1, code[code.length-1].length + 2, ...(fill(code[code.length-1].length + 2, '░', c['edge'])));
     //a.splice(beginning - w - 1, code[0].length + 2, ...(new Array(code[0].length + 2).fill(chalk.bgYellow(' '))));
-    for(let i = 0; i < codeHeight; i++){
-        a.splice(beginning + (i*w) - 1, 1, {[c['edge']]: '░' });
-        let l = 1;
-        if(i === 0){
-            l = Math.max(1, code[i+1].length - (code[i].length - 1));
-        } else if(i === codeHeight - 1){
-            l = Math.max(1, code[i-1].length - (code[i].length - 1));
-        } else {
-            l = Math.max(1, Math.max(code[i-1].length - (code[i].length - 1), code[i+1].length - (code[i].length - 1)));
+    if(code.length > 1){
+        for(let i = 0; i < codeHeight; i++){
+            a.splice(beginning + (i*w) - 1, 1, {[c['edge']]: '░' });
+            let l = 1;
+            if(i === 0){
+                l = Math.max(1, code[i+1].length - (code[i].length - 1));
+            } else if(i === codeHeight - 1){
+                l = Math.max(1, code[i-1].length - (code[i].length - 1));
+            } else {
+                l = Math.max(1, Math.max(code[i-1].length - (code[i].length - 1), code[i+1].length - (code[i].length - 1)));
+            }
+            a.splice(beginning + (i*w) + code[i].length, l, ...fill(l, '░', c['edge']));
         }
-        a.splice(beginning + (i*w) + code[i].length, l, ...fill(l, '░', c['edge']));
+    } else {
+        a.splice(beginning - 1, 1, {[c['edge']]: '░' });
+        a.splice(beginning + code[0].length, 1, ...fill(1, '░', c['edge']));
     }
+    
+    //makeBorder(a, codeX - 3, codeY - 3, codeWidth + 7, codeHeight + 6, c['dashBorder']);
     
     return a;
 }
 
 function dashboard(a){
     let pointer = worm.pointer;
-    let dashboardWidth = Math.floor(2/3 * w),
+    let dashboardWidth = Math.max(46, Math.floor(2/3 * w)),
         dashboardHeight = 3;
-    let cornerX = Math.floor(w/2) - dashboardWidth / 2,
-        cornerY = h - 1 - dashboardHeight;
+    dashboardX = Math.floor(w/2) - dashboardWidth / 2;
+    dashboardY = h - 1 - dashboardHeight;
     
-    let beginning = fromEnd(cornerX + cornerY * w);
+    let beginning = fromEnd(dashboardX + dashboardY * w);
     
-    a.splice(beginning, dashboardWidth, {[c['dashBorder']]: '╔' }, ...fill(dashboardWidth - 2, '═', c['dashBorder']), {[c['dashBorder']]: '╗' });
+    /*a.splice(beginning, dashboardWidth, {[c['dashBorder']]: '╔' }, ...fill(dashboardWidth - 2, '═', c['dashBorder']), {[c['dashBorder']]: '╗' });
     a.splice(beginning + w * (dashboardHeight - 1), dashboardWidth, {[c['dashBorder']]: '╚' }, ...fill(dashboardWidth - 2, '═', c['dashBorder']), {[c['dashBorder']]: '╝' });
     for(let i = 0; i < dashboardHeight - 2; i++){
         a.splice(beginning + (w * (i + 1)), 1, {[c['dashBorder']]: '║' });
         a.splice(beginning + (w * (i + 1)) + dashboardWidth - 1, 1, {[c['dashBorder']]: '║' });
-    }
+    }*/
+    makeBorder(a, dashboardX, dashboardY, dashboardWidth, dashboardHeight, c['dashBorder']);
+    
+    
     let posText = `(${pointer.x > 9 ? '' : ' '}${pointer.x},${pointer.y > 9 ? '' : ' '}${pointer.y})`
     let dirText = `(${pointer.dir.x < 0 ? '' : ' '}${pointer.dir.x},${pointer.dir.y < 0 ? '' : ' '}${pointer.dir.y})`
     //let angleText = `${pointer.getAngle()} `;
@@ -461,14 +558,36 @@ function dashboard(a){
     a.splice(beginning + w + 2, info.length, ...info);
     a.splice(beginning + w + dashboardWidth - controls.length - 2, controls.length, ...controls);
     
-    a.splice(beginning - w * 2, worm.stack.values.join(',').length + 2, ...escape('[' + worm.stack.values.join(',') + ']', 'keyword("orange")'));
+    a.splice(beginning - w * 3 + (dashboardWidth - (worm.stack.values.join(',').length + 2) - 1), worm.stack.values.join(',').length + 2, ...escape('[' + worm.stack.values.join(',') + ']', 'keyword("orange")'));
+    for(let i = 0; i < worm.stack.values.length; i++){
+        
+    }
+    a.splice(beginning - w * 3 + (dashboardWidth - (worm.stack.values.join(',').length + 2) - 1), worm.stack.values.join(',').length + 2, ...escape('[' + worm.stack.values.join(',') + ']', 'keyword("orange")'));
+    
+    a.splice(beginning - w * 2 + (dashboardWidth - (worm.stack.register.values.join(',').length + 2) - 1), worm.stack.register.values.join(',').length + 2, ...escape('[' + worm.stack.register.values.join(',') + ']', 'redBright'));
+    
+    a.splice(beginning - w * 1, worm.input.join('').length, ...escape(worm.input.join(''), 'magentaBright'));
+    
+    return a;
+}
+
+function stacks(a){
+    
+    
+    return a;
+}
+
+function output(a){
+    
+    //a.splice(fromEnd(3 + w * (h - 6)), worm.output.length, ...escape(worm.output.join(''), 'yellowBright'));
+    a.splice(fromEnd(3 + w * 3), worm.output.length, ...escape(worm.output.join(''), 'magentaBright'));
     
     return a;
 }
 
 function pointer(a){
     let pointer = worm.pointer;
-    let loc = fromEnd((codeCornerX + pointer.x) + (codeCornerY + pointer.y) * w);
+    let loc = fromEnd((codeX + pointer.x) + (codeY + pointer.y) * w);
     //log(a[a.length + loc])
     a.splice(loc, 1, {[c['pointer']]: pointer.instruction });
     
@@ -476,6 +595,19 @@ function pointer(a){
     loc += pointer.dir.y * w;
     let char = worm.board.get({x: pointer.x + pointer.dir.x, y: pointer.y + pointer.dir.y});
     a.splice(loc, 1, {[c['nextPointer']]: char === worm.EDGE ? '░' : char });
+}
+
+function trail(a){
+    let pointer = worm.pointer;
+    let trailColor = {r: 150, g: 200, b: 67};
+    let bgColor = {r: 38, g: 50, b: 56};
+    for(let i = 0; i < Math.min(4, pointerTrail.length); i++){
+        let pos = pointerTrail[i];
+        let loc = fromEnd((codeX + pos.x) + (codeY + pos.y) * w);
+        let char = worm.board.get({x: pos.x, y: pos.y});
+        a.splice(loc, 1, {['bgRgb(' + (trailColor.r + ((bgColor.r - trailColor.r) / 4) * i) + ", " + (trailColor.g + ((bgColor.g - trailColor.g) / 4) * i) + ", " + (trailColor.b + ((bgColor.b - trailColor.b) / 4) * i) + ")"]: char === worm.EDGE ? '░' : char });
+        //log(i, pos, loc, a[a.length + loc]);
+    }
 }
 
 function fromEnd(n){

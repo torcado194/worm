@@ -7,7 +7,7 @@ const log = console.log;
 
 util.inherits(Worm, EventEmitter);
 
-function Worm(code, input, delay = 0){
+function Worm(code, input = [], delay = 0){
     //EventEmitter.call(this);
     
     let worm = this;
@@ -264,6 +264,7 @@ function Worm(code, input, delay = 0){
             let angle = this.getAngle();
             if(this.wallMode){
                 if(angle === 0 || angle === 2 || angle === 4 || angle === 6){
+                    
                     for(let i = 0; i < 4; i++){ //loop 4 times checking for walls, if there are still walls just go
                         if(board.get(this.x + this.dir.x, this.y + this.dir.y) === EDGE){
                             this.rotate(2);
@@ -273,6 +274,33 @@ function Worm(code, input, delay = 0){
                     }
                     this.x += this.dir.x;
                     this.y += this.dir.y;
+                    
+                    
+                    /*function* wallCheck(){
+                        for(let i = 0; i < 4; i++){ //loop 4 times checking for walls, if there are still walls just go
+                            worm.emit('edgeDetect', {x: pointer.x + pointer.dir.x, y: pointer.y + pointer.dir.y});
+                            if(board.get(pointer.x + pointer.dir.x, pointer.y + pointer.dir.y) === EDGE){
+                                pointer.rotate(2);
+                            } else {
+                                break;
+                            }
+                            yield;
+                        }
+                        return;
+                    }
+                    
+                    let checker = wallCheck();
+                    checker.next();
+                    worm.on('continue', handler);
+                    
+                    function handler(){
+                        if(checker.next().done){
+                            pointer.x += pointer.dir.x;
+                            pointer.y += pointer.dir.y;
+                            worm.removeListener('continue', handler);
+                        }
+                    }*/
+                    
                 } else if(angle === 1 || angle === 3 || angle === 5 || angle === 7){
                     let rotateDir = 0;
                     if(board.get(this.x + this.dir.x, this.y + this.dir.y) === EDGE){
@@ -644,7 +672,7 @@ function Worm(code, input, delay = 0){
             if(v == worm.EDGE){
                 v = -1
             }
-            stack.push(v);
+            stack.push(parseChar(v));
         },
         's': () => {
             let y = stack.pop();
@@ -753,11 +781,19 @@ function Worm(code, input, delay = 0){
     }
     
     this.getCharInput = function(){
-        return parseChar(worm.input);
+        if(worm.input.length > 0){
+            return parseChar(worm.input);
+        } else {
+            return -1;
+        }
     }
     
     this.getNumInput = function(){
-        return parseNum(worm.input);
+        if(worm.input.length > 0){
+            return parseNum(worm.input);
+        } else {
+            return -1;
+        }
     }
 }
 

@@ -39,6 +39,9 @@ function init(){
     if(args.includes("-d") || args.includes("--delay")){
         let index = args.findIndex(a => a === "-d" || a === "--delay");
         delay = args[index + 1];
+        if(!isNaN(parseFloat(delay))){
+            delay = parseFloat(delay);
+        }
     } else {
         delay = 0;
     }
