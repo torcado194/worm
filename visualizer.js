@@ -103,6 +103,10 @@ function inputHandler(input){
         worm.update();
         draw();
     }
+    if(char === 'm'){
+        worm.step();
+        draw();
+    }
     
     if(input == '\u001B\u005B\u0041'){
         process.stdout.moveCursor(0, -1);

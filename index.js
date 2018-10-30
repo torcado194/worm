@@ -23,6 +23,8 @@ function Worm(code, input, delay = 0){
     
     worm.edge = worm.EDGE = EDGE;
     
+    worm.nextStep = 'execute';
+    
     this.init = function(){
         board = worm.board = new Board(worm.source);
         stack = worm.stack = new Stack();
@@ -260,31 +262,71 @@ function Worm(code, input, delay = 0){
             }
             this.origDir = {x: this.dir.x, y: this.dir.y};
             let angle = this.getAngle();
-            if(angle === 0 || angle === 4){
-                this.x += this.dir.x;
-                this.checkX();
-            } else if(angle === 2 || angle === 6){
-                this.y += this.dir.y;
-                this.checkY();
-            } else if(angle === 1 || angle === 5){
-                if(board.get(this.x + this.dir.x, this.y + this.dir.y) === EDGE){
+            if(this.wallMode){
+                if(angle === 0 || angle === 2 || angle === 4 || angle === 6){
+                    for(let i = 0; i < 4; i++){ //loop 4 times checking for walls, if there are still walls just go
+                        if(board.get(this.x + this.dir.x, this.y + this.dir.y) === EDGE){
+                            this.rotate(2);
+                        } else {
+                            break;
+                        }
+                    }
                     this.x += this.dir.x;
-                    this.checkX();
                     this.y += this.dir.y;
-                    this.checkY();
-                } else {
+                } else if(angle === 1 || angle === 3 || angle === 5 || angle === 7){
+                    let rotateDir = 0;
+                    if(board.get(this.x + this.dir.x, this.y + this.dir.y) === EDGE){
+                        let checkDir = toDir(this.getAngle() + 1);
+                        if(board.get(this.x + checkDir.x, this.y + checkDir.y) === EDGE){
+                            checkDir = toDir(this.getAngle() - 1);
+                            if(board.get(this.x + checkDir.x, this.y + checkDir.y) === EDGE){
+                                this.rotate(4);
+                            } else {
+                                this.rotate(-2);
+                                rotateDir = -2;
+                            }
+                        } else {
+                            this.rotate(2);
+                            rotateDir = 2;
+                        }
+                        for(let i = 0; i < 4; i++){ //loop 4 times checking for walls, if there are still walls just go
+                            if(board.get(this.x + this.dir.x, this.y + this.dir.y) === EDGE){
+                                this.rotate(rotateDir);
+                            } else {
+                                break;
+                            }
+                        }
+                    }
                     this.x += this.dir.x;
                     this.y += this.dir.y;
                 }
-            } else if(angle === 3 || angle === 7){
-                if(board.get(this.x + this.dir.x, this.y + this.dir.y) === EDGE){
-                    this.y += this.dir.y;
-                    this.checkY();
+            } else {
+                if(angle === 0 || angle === 4){
                     this.x += this.dir.x;
                     this.checkX();
-                } else {
-                    this.x += this.dir.x;
+                } else if(angle === 2 || angle === 6){
                     this.y += this.dir.y;
+                    this.checkY();
+                } else if(angle === 1 || angle === 5){
+                    if(board.get(this.x + this.dir.x, this.y + this.dir.y) === EDGE){
+                        this.x += this.dir.x;
+                        this.checkX();
+                        this.y += this.dir.y;
+                        this.checkY();
+                    } else {
+                        this.x += this.dir.x;
+                        this.y += this.dir.y;
+                    }
+                } else if(angle === 3 || angle === 7){
+                    if(board.get(this.x + this.dir.x, this.y + this.dir.y) === EDGE){
+                        this.y += this.dir.y;
+                        this.checkY();
+                        this.x += this.dir.x;
+                        this.checkX();
+                    } else {
+                        this.x += this.dir.x;
+                        this.y += this.dir.y;
+                    }
                 }
             }
             this.checkWrap();
@@ -539,7 +581,7 @@ function Worm(code, input, delay = 0){
             for(let y = 0; y < board.code.length; y++){
                 let line = board.code[y];
                 for(let x = 0; x < line.length; x++){
-                    if(board.code[y][x] === 'o' && (x !== current.x && y !== current.y)){
+                    if(board.code[y][x] === 'o' && !(x === current.x && y === current.y)){
                         let dist = Math.abs((x - current.x) + (y - current.y));
                         if(dist < minDist){
                             minDist = dist;
@@ -550,7 +592,6 @@ function Worm(code, input, delay = 0){
             }
             pointer.setPos(target.x, target.y);
             pointer.prev = {x: pointer.x, y: pointer.y};
-            pointer.skipMove = true;
         },
         ':': () => {
             stack.duplicate();
@@ -639,7 +680,7 @@ function Worm(code, input, delay = 0){
             worm.emit('input', 'character', function(char){
                 worm.stack.push(parseChar(char));
                 worm.running = true;
-                worm.update(true);
+                worm.continue(true);
             });
         },
         't': () => {
@@ -647,7 +688,7 @@ function Worm(code, input, delay = 0){
             worm.emit('input', 'number', function(num){
                 worm.stack.push(parseNum(num));
                 worm.running = true;
-                worm.update(true);
+                worm.continue(true);
             });
         },
     }
@@ -658,14 +699,21 @@ function Worm(code, input, delay = 0){
     
     this.update = function(move){
         if(delay === 'step'){
-            worm.pointer.execute();
-            worm.pointer.move();
-        } else {
-            if(!move){
+            if(worm.nextStep === 'execute'){
                 worm.pointer.execute();
             }
+            worm.pointer.move();
+            worm.nextStep = 'execute';
+        } else {
+            if(!move){
+                if(worm.nextStep === 'execute'){
+                    worm.pointer.execute();
+                }
+            }
+            worm.pointer.move();
+            worm.nextStep = 'execute';
+            
             if(worm.running){
-                worm.pointer.move();
                 if(delay && typeof delay === 'number'){
                     setTimeout(()=>{
                         worm.update();
@@ -673,9 +721,29 @@ function Worm(code, input, delay = 0){
                 } else {
                     worm.update();
                 }
-            } else {
-                //log(chalk.keyword('orange')(worm.output.join('')));
             }
+        }
+    }
+    
+    this.step = function(move){
+        if(move){
+            worm.nextStep = 'move';
+        }
+        if(worm.nextStep === 'execute'){
+            worm.pointer.execute();
+            worm.nextStep = 'move';
+        } else if(worm.nextStep === 'move'){
+            worm.pointer.move();
+            worm.nextStep = 'execute';
+        }
+        //worm.step();
+    }
+    
+    this.continue = function(move){
+        if(delay === 'step'){
+            worm.step(move);
+        } else {
+            worm.update(move);
         }
     }
     
