@@ -120,7 +120,7 @@ function Worm(code, input = [], delay = 0){
     
     function Stack(values = [], r = false){
         this.values = values;
-        this.stacks = [];
+        this.stacks = [this];
         this.current = this;
         if(!r){
             this.registers = [this.register = new Stack([], true)];
@@ -131,7 +131,7 @@ function Worm(code, input = [], delay = 0){
         }
         
         this.push = function(v){
-            return this.current.values.push(v);
+            return this.current.values.push(...(Array.isArray(v) ? v : [v]));
         }
         
         this.length = function(){
@@ -139,14 +139,15 @@ function Worm(code, input = [], delay = 0){
         }
         
         this.fork = function(n){
-            this.current = this.stacks.push(new Stack(this.current.splice(-n)));
-            this.registers.push(this.register = new Stack());
+            this.stacks.push(new Stack(this.current.values.splice(-n)));
+            this.current = this.stacks[this.stacks.length - 1];
+            this.registers.push(this.register = (new Stack([], true)));
         }
         
         this.merge = function(){
-            (this.current = this.stacks[this.stacks.length-2]).push(this.stacks.pop());
+            (this.current = this.stacks[this.stacks.length-2]).push(this.stacks.pop().values);
             this.registers.pop();
-            this.register = this.registers[this.registers.length];
+            this.register = this.registers[this.registers.length - 1];
         }
         
         this.duplicate = function(){

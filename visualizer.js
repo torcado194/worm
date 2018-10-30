@@ -16,7 +16,9 @@ let worm;
 let codeX = 0,
     codeY = 0,
     dashboardX = 0,
-    dashboardY = 0;
+    dashboardY = 0,
+    dashboardWidth = 0,
+    dashboardHeight = 0;
 
 let screen = [],
     prevScreen = [];
@@ -255,6 +257,7 @@ function draw(p){
     trim(a);
     borders(a);
     dashboard(a);
+    stacks(a);
     output(a);
     placeCode(a);
     pointer(a);
@@ -519,8 +522,8 @@ function placeCode(a){
 
 function dashboard(a){
     let pointer = worm.pointer;
-    let dashboardWidth = Math.max(46, Math.floor(2/3 * w)),
-        dashboardHeight = 3;
+    dashboardWidth = Math.max(46, Math.floor(2/3 * w));
+    dashboardHeight = 3;
     dashboardX = Math.floor(w/2) - dashboardWidth / 2;
     dashboardY = h - 1 - dashboardHeight;
     
@@ -558,21 +561,32 @@ function dashboard(a){
     a.splice(beginning + w + 2, info.length, ...info);
     a.splice(beginning + w + dashboardWidth - controls.length - 2, controls.length, ...controls);
     
-    a.splice(beginning - w * 3 + (dashboardWidth - (worm.stack.values.join(',').length + 2) - 1), worm.stack.values.join(',').length + 2, ...escape('[' + worm.stack.values.join(',') + ']', 'keyword("orange")'));
-    for(let i = 0; i < worm.stack.values.length; i++){
-        
-    }
-    a.splice(beginning - w * 3 + (dashboardWidth - (worm.stack.values.join(',').length + 2) - 1), worm.stack.values.join(',').length + 2, ...escape('[' + worm.stack.values.join(',') + ']', 'keyword("orange")'));
-    
-    a.splice(beginning - w * 2 + (dashboardWidth - (worm.stack.register.values.join(',').length + 2) - 1), worm.stack.register.values.join(',').length + 2, ...escape('[' + worm.stack.register.values.join(',') + ']', 'redBright'));
-    
-    a.splice(beginning - w * 1, worm.input.join('').length, ...escape(worm.input.join(''), 'magentaBright'));
-    
     return a;
 }
 
 function stacks(a){
+    let dashStart = fromEnd(dashboardX + dashboardY * w);
+    let beginning = 0;
     
+    beginning = dashStart - w * 3 + (dashboardWidth - (worm.stack.current.values.join(',').length + 2) - 1);
+    a.splice(beginning, worm.stack.current.values.join(',').length + 2, ...escape('[' + worm.stack.current.values.join(',') + ']', 'keyword("orange")'));
+    let curPos = 1;
+    for(let i = 0; i < worm.stack.current.values.length; i++){
+        let v = worm.stack.current.values[i];
+        let char = String.fromCharCode(v);
+        if(v >= 32 && v <= 126){
+            a.splice(beginning - w * 1 + curPos, char.length, ...escape(char, 'yellow'));
+        }
+        curPos += v.toString().length + 1;
+    }
+    
+    beginning = dashStart - w * 3 + (dashboardWidth - (worm.stack.current.values.join(',').length + 2) - 1);
+    a.splice(beginning, worm.stack.current.values.join(',').length + 2, ...escape('[' + worm.stack.current.values.join(',') + ']', 'keyword("orange")'));
+    
+    beginning = dashStart - w * 2 + (dashboardWidth - (worm.stack.register.values.join(',').length + 2) - 1);
+    a.splice(beginning, worm.stack.register.values.join(',').length + 2, ...escape('[' + worm.stack.register.values.join(',') + ']', 'redBright'));
+    
+    a.splice(dashStart - w * 1, worm.input.join('').length, ...escape(worm.input.join(''), 'magentaBright'));
     
     return a;
 }
