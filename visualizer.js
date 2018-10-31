@@ -742,9 +742,9 @@ function output(a){
 }
 
 function info(a){
-    
-    let text = worm.board.code.reduce((arr, v) => arr.concat(v)).length + ' chars';
-    a.splice(fromEnd((w - text.length - 3) + w * 1), text.length, ...escape(worm.board.code.reduce((arr, v) => arr.concat(v)).length.toString(), 'magentaBright'), ...escape(' chars', 'blueBright'));
+    let charCount = worm.board.code.reduce((arr, v) => arr.concat(v)).length + (worm.board.code.length - 1)
+    let text = charCount + ' chars';
+    a.splice(fromEnd((w - text.length - 3) + w * 1), text.length, ...escape(charCount.toString(), 'magentaBright'), ...escape(' chars', 'blueBright'));
     
     text = worm.cycleCount + ' cycles';
     a.splice(fromEnd((w - text.length - 3) + w * 2), text.length, ...escape(worm.cycleCount.toString(), 'magentaBright'), ...escape(' cycles', 'blueBright'));
