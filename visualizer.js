@@ -11,6 +11,11 @@ let source = '',
     sourceIndex = 0,
     input = '';
 
+let done = false;
+
+let characterCount = 0,
+    cycleCount = 0;
+
 let worm;
 
 let codeX = 0,
@@ -143,16 +148,89 @@ function resizeHandler(){
     log(chalk.yellow(w, h));
 }
 
+
+let dashboardControls = [
+    {name: 'edit',
+     pos: 0},
+    {name: 'halfStep',
+     pos: 0},
+    {name: 'fullStep',
+     pos: 0},
+    {name: 'play',
+     pos: 0},
+    {name: 'stop',
+     pos: 0}
+]
+let inDash = true,
+    editing = false;
+
+let curControlPos = 3,
+    curControl = dashboardControls[curControlPos];
+let cursor = {x: 0, y: 0};
+
+let playing = false,
+    playSpeed = 3,
+    playSpeedMax = 11;
+
 process.stdin.setRawMode(true);
 process.stdin.on('data', inputHandler);
 function inputHandler(input){
+    let char = String.fromCharCode(input[0]);
+    
     if(input[0] === 3){
+        cursor = {x: 0, y: h};
+        updateCursor();
         process.exit(0);
     }
     //log(input);
     //log([...input]);
-    let char = String.fromCharCode(input[0]);
-    if(char === 'a'){
+    
+    if(inDash){
+        if(input == '\u001B\u005B\u0043'){ //right
+            curControlPos = (curControlPos + 1) % dashboardControls.length;
+        }
+        if(input == '\u001B\u005B\u0044'){ //left
+            curControlPos = ((curControlPos - 1) + dashboardControls.length) % dashboardControls.length;
+        }
+        if(input == '\u001B\u005B\u0041'){ //up
+            if(playing && curControl.name === 'play'){
+                playSpeed = (playSpeed + 1) % playSpeedMax;
+            }
+        }
+        if(input == '\u001B\u005B\u0042'){ //down
+            if(playing && curControl.name === 'play'){
+                playSpeed = ((playSpeed - 1) + playSpeedMax) % playSpeedMax;
+            }
+        }
+        
+        
+        curControl = dashboardControls[curControlPos];
+        cursor = {x: dashboardX + curControl.pos, y: dashboardY + 1};
+        
+        if(char === ' '){
+            if(curControl.name === 'fullStep'){
+                worm.update();
+                draw();
+            } else if(curControl.name === 'halfStep'){
+                worm.step();
+                draw();
+            } else if(curControl.name === 'play'){
+                if(playing){
+                    playing = false
+                } else {
+                    playing = true;
+                    playLoop();
+                }
+            } else if(curControl.name === 'stop'){
+                
+            }
+        }
+        
+        draw();
+        updateCursor();
+    }
+    
+    /*if(char === 'a'){
         draw();
     }
     
@@ -168,11 +246,11 @@ function inputHandler(input){
     if(input == '\u001B\u005B\u0041'){
         process.stdout.moveCursor(0, -1);
     }
-    if(input == '\u001B\u005B\u0043'){
-        process.stdout.moveCursor(1, 0); 
-    }
     if(input == '\u001B\u005B\u0042'){
         process.stdout.moveCursor(0, 1);
+    }
+    if(input == '\u001B\u005B\u0043'){
+        process.stdout.moveCursor(1, 0); 
     }
     if(input == '\u001B\u005B\u0044'){
         process.stdout.moveCursor(-1, 0);
@@ -198,7 +276,23 @@ function inputHandler(input){
     
     if(char === 'v'){
         worm.emit('continue');
+    }*/
+}
+
+function playLoop(){
+    if(playing){
+        worm.step();
+        draw();
+        setTimeout(()=>{
+            if(playing){
+                playLoop();
+            }
+        }, playSpeed * 100);
     }
+}
+
+function updateCursor(){
+    process.stdout.cursorTo(cursor.x, cursor.y);
 }
 
 let flags = {
@@ -236,6 +330,12 @@ function init(){
         pointerTrail.splice(0, 0, {x: from.x, y: from.y});
     });
     
+    worm.on('end', () => {
+        done = true;
+        playing = false;
+        draw();
+    });
+    
     /*worm.on('edgeDetect', pos => {
         let a = [...prevScreen];
         
@@ -248,6 +348,10 @@ function init(){
     
     worm.init();
     resizeHandler();
+    
+    draw();
+    cursor = {x: dashboardX + curControl.pos, y: dashboardY + 1};
+    updateCursor();
 }
 
 
@@ -259,6 +363,7 @@ function draw(p){
     dashboard(a);
     stacks(a);
     output(a);
+    info(a);
     placeCode(a);
     pointer(a);
     //trail(a);
@@ -270,6 +375,8 @@ function draw(p){
     }
     
     prevScreen = [...screen];
+    
+    updateCursor();
 }
 
 function render(screen, prev){
@@ -287,11 +394,11 @@ function render(screen, prev){
     for(let i = 0; i < screen.length; i++){
         let a = screen[i],
             b = prev[i];
+        if(a === undefined || b === undefined){
+            break;
+        }
         if(same(a, b)){
             if(line.length !== 0){
-                if(Math.floor(lineStart / w) < 4){
-                    debugger;
-                }
                 out.cursorTo(lineStart % w, Math.floor(lineStart / w)) //convert to x,y
                 out.write(line);
                 line = '';
@@ -349,6 +456,12 @@ function render(screen, prev){
             }
         }
     }
+    if(line.length !== 0){
+        out.cursorTo(lineStart % w, Math.floor(lineStart / w)) //convert to x,y
+        out.write(line);
+        line = '';
+    }
+    
     out.cursorTo(0, h);
     out.write('[39m[49m');
     
@@ -445,12 +558,16 @@ function borders(a){
             
         }
     }*/
-    makeBorder(a, 1, 0, w - 2, h - 0, c['border']);
+    if(done){
+        makeBorder(a, 1, 0, w - 2, h - 0, 'greenBright'); 
+        a.splice(Math.ceil(w / 2) - 4, 7, ...escape('╡', 'greenBright'),...escape('done!', 'yellowBright'), ...escape('╞', 'greenBright'));
+    } else {
+        makeBorder(a, 1, 0, w - 2, h - 0, c['border']);
+    }
     return a;
 }
 
 function makeBorder(a, x, y, width, height, color){
-    width -= 1;
     height -= 1;
     let horizontal = fill(width - 2, '═', color);
     a.splice(fromEnd(x + (y * w)), horizontal.length + 2, {[color]: '╔' }, ...horizontal, {[color]: '╗' }); //top
@@ -524,7 +641,7 @@ function dashboard(a){
     let pointer = worm.pointer;
     dashboardWidth = Math.max(46, Math.floor(2/3 * w));
     dashboardHeight = 3;
-    dashboardX = Math.floor(w/2) - dashboardWidth / 2;
+    dashboardX = Math.floor(w/2 - dashboardWidth / 2);
     dashboardY = h - 1 - dashboardHeight;
     
     let beginning = fromEnd(dashboardX + dashboardY * w);
@@ -538,6 +655,7 @@ function dashboard(a){
     makeBorder(a, dashboardX, dashboardY, dashboardWidth, dashboardHeight, c['dashBorder']);
     
     
+    
     let posText = `(${pointer.x > 9 ? '' : ' '}${pointer.x},${pointer.y > 9 ? '' : ' '}${pointer.y})`
     let dirText = `(${pointer.dir.x < 0 ? '' : ' '}${pointer.dir.x},${pointer.dir.y < 0 ? '' : ' '}${pointer.dir.y})`
     //let angleText = `${pointer.getAngle()} `;
@@ -549,17 +667,41 @@ function dashboard(a){
 //    let edit = `[╱]`;
     let edit = `[√]`;
 //    let eventStep = `[‣`;
-    let eventStep = `[∙`;
-    let halfStep = `⠆`;
+    let halfStep = `[⠆`;
+    let fullStep = `∙]`;
 //    let fullStep = `≥]`;
-    let fullStep = `ⵗ]`;
-    let play = `[►`;
+    //let eventStep = `ⵗ]`;
+    let play = playing ? `[‼` : `[►`;
     let pause = `║`;
     let stop = `■]`;
-    let controls = [...escape(edit, c['controls']), ...fill(2, ' '), ...escape(eventStep, c['controls']), ' ', ...escape(halfStep, c['controls']), ' ', ...escape(fullStep, c['controls']), ...fill(2, ' '), ...escape(play, c['controls']), ...fill(2, ' '), ...escape(stop, c['controls'])]
+    //let controls = [...escape(edit, c['controls']), ...fill(2, ' '), ...escape(eventStep, c['controls']), ' ', ...escape(halfStep, c['controls']), ' ', ...escape(fullStep, c['controls']), ...fill(3, ' '), ...escape(play, c['controls']), ...fill(2, ' '), ...escape(stop, c['controls'])]
     //let controls = [...step.split('').map(v => ({[c['yellowBright']]: v })), ...step.split('').map(v => ({[c['yellowBright']]: v }))]
+    
+    //makeBorder(a, dashboardX, dashboardY, info.length + 4, 3, 'cyanBright');
     a.splice(beginning + w + 2, info.length, ...info);
-    a.splice(beginning + w + dashboardWidth - controls.length - 2, controls.length, ...controls);
+    
+    let controls = escape(`${edit}  ${halfStep} ${fullStep}   ${play}  ${stop}`, c['controls']);
+    dashboardControls[0].pos = (dashboardWidth - controls.length - 3) + 1;
+    dashboardControls[1].pos = (dashboardWidth - controls.length - 3) + 6;
+    dashboardControls[2].pos = (dashboardWidth - controls.length - 3) + 8;
+    dashboardControls[3].pos = (dashboardWidth - controls.length - 3) + 14;
+    dashboardControls[4].pos = (dashboardWidth - controls.length - 3) + 17;
+    
+    
+    makeBorder(a, dashboardX + (dashboardWidth - (controls.length + 4)), dashboardY, controls.length + 2, 3, 'cyanBright');
+    a.splice(beginning + w + (dashboardWidth - (controls.length + 4)), 1, ' ');
+    a.splice(beginning + w + (dashboardWidth - (controls.length + 4)) + controls.length + 1, 1, ' ');
+    a.splice(beginning + w + dashboardWidth - controls.length - 3, controls.length, ...controls);
+    
+    
+    if(playing){
+        let num = (playSpeed + 1) % playSpeedMax;
+        a.splice(fromEnd(dashboardX + dashboardControls[3].pos - (num.toString().length) + w * (dashboardY + 0)), (num.toString().length), ...escape(num.toString(), c['controls']))
+        num = playSpeed;
+        a.splice(fromEnd(dashboardX + dashboardControls[3].pos - (num.toString().length + 1) + w * (dashboardY + 1)), (num.toString().length + 1), ...escape('[' + num.toString(), c['controls']))
+        num = (playSpeed - 1 + playSpeedMax) % playSpeedMax;
+        a.splice(fromEnd(dashboardX + dashboardControls[3].pos - (num.toString().length) + w * (dashboardY + 2)), (num.toString().length), ...escape(num.toString(), c['controls']))
+    }
     
     return a;
 }
@@ -568,7 +710,7 @@ function stacks(a){
     let dashStart = fromEnd(dashboardX + dashboardY * w);
     let beginning = 0;
     
-    beginning = dashStart - w * 3 + (dashboardWidth - (worm.stack.current.values.join(',').length + 2) - 1);
+    beginning = dashStart - w * 3 + (dashboardWidth - (worm.stack.current.values.join(',').length + 2));
     a.splice(beginning, worm.stack.current.values.join(',').length + 2, ...escape('[' + worm.stack.current.values.join(',') + ']', 'keyword("orange")'));
     let curPos = 1;
     for(let i = 0; i < worm.stack.current.values.length; i++){
@@ -580,10 +722,10 @@ function stacks(a){
         curPos += v.toString().length + 1;
     }
     
-    beginning = dashStart - w * 3 + (dashboardWidth - (worm.stack.current.values.join(',').length + 2) - 1);
+    beginning = dashStart - w * 3 + (dashboardWidth - (worm.stack.current.values.join(',').length + 2));
     a.splice(beginning, worm.stack.current.values.join(',').length + 2, ...escape('[' + worm.stack.current.values.join(',') + ']', 'keyword("orange")'));
     
-    beginning = dashStart - w * 2 + (dashboardWidth - (worm.stack.register.values.join(',').length + 2) - 1);
+    beginning = dashStart - w * 2 + (dashboardWidth - (worm.stack.register.values.join(',').length + 2));
     a.splice(beginning, worm.stack.register.values.join(',').length + 2, ...escape('[' + worm.stack.register.values.join(',') + ']', 'redBright'));
     
     a.splice(dashStart - w * 1, worm.input.join('').length, ...escape(worm.input.join(''), 'magentaBright'));
@@ -595,6 +737,17 @@ function output(a){
     
     //a.splice(fromEnd(3 + w * (h - 6)), worm.output.length, ...escape(worm.output.join(''), 'yellowBright'));
     a.splice(fromEnd(3 + w * 3), worm.output.length, ...escape(worm.output.join(''), 'magentaBright'));
+    
+    return a;
+}
+
+function info(a){
+    
+    let text = worm.board.code.reduce((arr, v) => arr.concat(v)).length + ' chars';
+    a.splice(fromEnd((w - text.length - 3) + w * 1), text.length, ...escape(worm.board.code.reduce((arr, v) => arr.concat(v)).length.toString(), 'magentaBright'), ...escape(' chars', 'blueBright'));
+    
+    text = worm.cycleCount + ' cycles';
+    a.splice(fromEnd((w - text.length - 3) + w * 2), text.length, ...escape(worm.cycleCount.toString(), 'magentaBright'), ...escape(' cycles', 'blueBright'));
     
     return a;
 }

@@ -25,6 +25,8 @@ function Worm(code, input = [], delay = 0){
     
     worm.nextStep = 'execute';
     
+    worm.cycleCount = 0;
+    
     this.init = function(){
         board = worm.board = new Board(worm.source);
         stack = worm.stack = new Stack();
@@ -230,6 +232,7 @@ function Worm(code, input = [], delay = 0){
             
             this.origDir = {x: this.dir.x, y: this.dir.y};
             
+            worm.cycleCount++;
             worm.emit('instruction', this.instruction, null, {x: this.x, y: this.y});
             
             if(this.instruction === EDGE){
