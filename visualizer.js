@@ -736,7 +736,22 @@ function stacks(a){
 function output(a){
     
     //a.splice(fromEnd(3 + w * (h - 6)), worm.output.length, ...escape(worm.output.join(''), 'yellowBright'));
-    a.splice(fromEnd(3 + w * 3), worm.output.length, ...escape(worm.output.join(''), 'magentaBright'));
+    let line = '',
+        row = 0;
+    for(let i = 0; i < worm.output.length; i++){
+        if(worm.output[i] === '\n'){
+            if(line.length > 0){
+                a.splice(fromEnd(3 + w * (row + 2)), line.length, ...escape(line, 'magentaBright'));
+            }
+            row++
+            line = '';
+        } else {
+            line += worm.output[i];
+        }
+    }
+    if(line.length > 0){
+        a.splice(fromEnd(3 + w * (row + 2)), line.length, ...escape(line, 'magentaBright'));
+    }
     
     return a;
 }

@@ -64,6 +64,7 @@ function init(){
         log(chalk.keyword('orange')(data));
     });
     worm.on('end', (output) => {
+        log(worm.output);
         log(chalk`{magenta ::done!::  }{keyword('orange') ${output}}`);
         log(chalk.greenBright(source));
         process.stdin.emit('end');
