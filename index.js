@@ -702,7 +702,10 @@ function Worm(code, input = [], delay = 0){
         },
         'w': () => {
             let x = stack.pop();
-            //sleep(x);
+            worm.running = false;
+            pointer.skipMove = true;
+            worm.emit('wait', x * 10);
+            worm.sleep(x * 10);
         },
         ';': () => {
             worm.end();
@@ -795,6 +798,13 @@ function Worm(code, input = [], delay = 0){
         } else {
             worm.update(move);
         }
+    }
+    
+    this.sleep = function(time){
+        setTimeout(()=>{
+            worm.running = true;
+            worm.continue(true);
+        }, time);
     }
     
     this.end = function(){
