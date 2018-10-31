@@ -674,7 +674,7 @@ function placeCode(a){
     
     
     codeX = centerX - Math.floor(codeWidth / 2);
-    codeY = centerY - Math.floor(codeHeight / 2);
+    codeY = centerY - Math.floor(codeHeight / 2) - 1;
     
     
     let beginning = fromEnd(codeX + codeY * w);
@@ -812,7 +812,7 @@ function output(a){
     for(let i = 0; i < worm.output.length; i++){
         if(worm.output[i] === '\n'){
             if(line.length > 0){
-                a.splice(fromEnd(3 + w * (row + 2)), line.length, ...escape(line, 'magentaBright'));
+                a.splice(fromEnd(3 + w * (row + 3)), line.length, ...escape(line, 'magentaBright'));
             }
             row++
             line = '';
@@ -821,7 +821,12 @@ function output(a){
         }
     }
     if(line.length > 0){
-        a.splice(fromEnd(3 + w * (row + 2)), line.length, ...escape(line, 'magentaBright'));
+        a.splice(fromEnd(3 + w * (row + 3)), line.length, ...escape(line, 'magentaBright'));
+    }
+    
+    for(let i = 0; i < row + 1; i++){
+        let char = i === 0 ? '╔' : i === row ? '╚' : '║';
+        a.splice(fromEnd(1 + w * (i + 3)), 1, ...escape(char, 'magentaBright'))
     }
     
     return a;

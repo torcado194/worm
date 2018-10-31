@@ -190,6 +190,7 @@ function Worm(code, input = [], delay = 0){
         this.numString = [];
         this.numStringing = false;
         this.skipMove = false;
+        this.shifting = false;
         
         this.checkX = function(){
             if(board.get(this.x, this.y) === EDGE){
@@ -207,9 +208,9 @@ function Worm(code, input = [], delay = 0){
         this.checkY = function(){
             if(board.get(this.x, this.y) === EDGE){
                 if(this.y < board.getTop(this.x)){
-                    this.y = board.bottom;
+                    this.y = board.getBottom(this.x);
                 } else if(this.y > board.getBottom(this.x)){
-                    this.y = 0;
+                    this.y = board.getTop(this.x);
                 }
             }
             
@@ -234,6 +235,8 @@ function Worm(code, input = [], delay = 0){
             
             worm.cycleCount++;
             worm.emit('instruction', this.instruction, null, {x: this.x, y: this.y});
+            
+            this.shifting = false;
             
             if(this.instruction === EDGE){
                 //log("b")
@@ -264,7 +267,14 @@ function Worm(code, input = [], delay = 0){
                 this.skipMove = false;
                 return;
             }
-            this.origDir = {x: this.dir.x, y: this.dir.y};
+            if(!this.shifting){
+                this.origDir = {x: this.dir.x, y: this.dir.y};
+            }
+            /*if(this.shifting && !(this.instruction === 'x' || this.instruction === 'y')){
+                this.dir = {x: this.origDir.x, y: this.origDir.y};
+                this.shifting = false;
+            }*/
+            
             let angle = this.getAngle();
             if(this.wallMode){
                 if(angle === 0 || angle === 2 || angle === 4 || angle === 6){
@@ -563,17 +573,23 @@ function Worm(code, input = [], delay = 0){
             pointer.setDir(dir.x, -dir.y);
         },
         'x': () => {
+            pointer.shifting = true;
             let angle = toAngle(pointer.x - pointer.prev.x, pointer.y - pointer.prev.y);
+            pointer.prev = {x: pointer.x, y: pointer.y};
             pointer.setAngle(angle + 1);
             pointer.move();
-            pointer.setAngle(angle);
+            //pointer.setAngle(angle);
+            pointer.setDir(pointer.origDir.x, pointer.origDir.y);
             pointer.skipMove = true;
         },
         'y': () => {
+            pointer.shifting = true;
             let angle = toAngle(pointer.x - pointer.prev.x, pointer.y - pointer.prev.y);
+            pointer.prev = {x: pointer.x, y: pointer.y};
             pointer.setAngle(angle - 1);
             pointer.move();
-            pointer.setAngle(angle);
+            //pointer.setAngle(angle);
+            pointer.setDir(pointer.origDir.x, pointer.origDir.y);
             pointer.skipMove = true;
         },
         '&': () => {
