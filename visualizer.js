@@ -193,9 +193,9 @@ function inputHandler(input){
     //log([...input]);
     if(reading){
         if(inputCharMode){
-            if(lastStepSize === 'full'){
+            /*if(lastStepSize === 'full'){
                 worm.pointer.skipMove = true;
-            }
+            }*/
             inputCB(input.toString());
             reading = false;
             cursor = {x: dashboardX + curControl.pos, y: dashboardY + 1};
@@ -203,9 +203,9 @@ function inputHandler(input){
             updateCursor();
         } else {
             if(input == '\u000d'){ //enter
-                if(lastStepSize === 'full'){
+                /*if(lastStepSize === 'full'){
                     worm.pointer.skipMove = true;
-                }
+                }*/
                 if(inputLine.length === 0){
                     inputCB('\n');
                 } else {

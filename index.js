@@ -725,6 +725,7 @@ function Worm(code, input = [], delay = 0){
         },
         'r': () => {
             worm.running = false;
+            pointer.skipMove = true;
             worm.emit('input', 'character', function(char){
                 worm.stack.push(parseChar(char));
                 worm.running = true;
@@ -733,6 +734,7 @@ function Worm(code, input = [], delay = 0){
         },
         't': () => {
             worm.running = false;
+            pointer.skipMove = true;
             worm.emit('input', 'number', function(num){
                 worm.stack.push(parseNum(num));
                 worm.running = true;
@@ -865,7 +867,7 @@ function parseNum(item){
         if(item[item.length-1] === "-"){
             negative = true;
             if(item.length <= 1 || !/[.0-9]/.test(item[item.length-2])){ // if next item isn't a number or decimal point, return minus char
-                return item.pop();
+                return item.pop().charCodeAt(0);
             } else {
                 item.pop();
             }
@@ -874,7 +876,7 @@ function parseNum(item){
         if(item[item.length-1] === "."){
             inFraction = true;
             if(item.length <= 1 || !/[0-9]/.test(item[item.length-2])){ // if next item isn't a number, return decimal point char
-                return item.pop();
+                return item.pop().charCodeAt(0);
             } else {
                 item.pop();
             }
