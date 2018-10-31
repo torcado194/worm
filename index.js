@@ -173,7 +173,7 @@ function Worm(code, input = [], delay = 0){
         }
         
         this.fromRegister = function(){
-            this.current.push(this.register.pop());
+            this.current.push(this.register.values.length === 0 ? -1 : this.register.pop());
         }
     }
     
