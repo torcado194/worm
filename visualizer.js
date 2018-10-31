@@ -171,6 +171,13 @@ let cursor = {x: 0, y: 0};
 let playing = false,
     playSpeed = 3,
     playSpeedMax = 11;
+let lastStepSize = '';
+
+let inputCharMode = false;
+let reading = false;
+
+let inputCB;
+let inputLine = '';
 
 process.stdin.setRawMode(true);
 process.stdin.on('data', inputHandler);
@@ -184,8 +191,41 @@ function inputHandler(input){
     }
     //log(input);
     //log([...input]);
-    
-    if(inDash){
+    if(reading){
+        if(inputCharMode){
+            if(lastStepSize === 'full'){
+                worm.pointer.skipMove = true;
+            }
+            inputCB(input.toString());
+            reading = false;
+            cursor = {x: dashboardX + curControl.pos, y: dashboardY + 1};
+            draw();
+            updateCursor();
+        } else {
+            if(input == '\u000d'){ //enter
+                if(lastStepSize === 'full'){
+                    worm.pointer.skipMove = true;
+                }
+                if(inputLine.length === 0){
+                    inputCB('\n');
+                } else {
+                    inputCB(inputLine);
+                }
+                inputLine = '';
+                reading = false;
+                clearInput();
+                cursor = {x: dashboardX + curControl.pos, y: dashboardY + 1};
+            } else if(input == '\u0008'){ //backspace
+                inputLine = inputLine.slice(0, -1);
+                cursor.x -= 1;
+            } else {
+                inputLine += input.toString();
+                cursor.x += 1;
+            }
+        }
+        draw();
+        updateCursor();
+    } else if(inDash){
         if(input == '\u001B\u005B\u0043'){ //right
             curControlPos = (curControlPos + 1) % dashboardControls.length;
         }
@@ -209,9 +249,11 @@ function inputHandler(input){
         
         if(char === ' '){
             if(curControl.name === 'fullStep'){
+                lastStepSize = 'full';
                 worm.update();
                 draw();
             } else if(curControl.name === 'halfStep'){
+                lastStepSize = 'half';
                 worm.step();
                 draw();
             } else if(curControl.name === 'play'){
@@ -336,6 +378,34 @@ function init(){
         draw();
     });
     
+    worm.on('input', (type, cb) => {
+        inputCB = cb;
+        cursor = {x: 0, y: h};
+        updateCursor();
+        reading = true;
+        playing = false;
+        if(type === "character"){
+            inputCharMode = true;
+        } else {
+            inputCharMode = false;
+        }
+        /*
+        process.stdin.on('data', handler);
+        function handler(input){
+            if(input[0] === 3){
+                process.exit(0);
+            }
+            if(inputCharMode){
+                inputCharMode = false;
+                process.stdin.setRawMode(false);
+            }
+            //log(input);
+            //log([...input]);
+            cb(input.toString());
+            process.stdin.removeListener('data', handler);
+        }*/
+    });
+    
     /*worm.on('edgeDetect', pos => {
         let a = [...prevScreen];
         
@@ -366,6 +436,7 @@ function draw(p){
     info(a);
     placeCode(a);
     pointer(a);
+    showInput(a);
     //trail(a);
     
     if(p){
@@ -754,6 +825,22 @@ function output(a){
     }
     
     return a;
+}
+
+function showInput(a){
+    clearInput();
+    if(inputLine.length > 0){
+        //a.splice(-1, inputLine.length, ...escape(inputLine, 'white'))
+        process.stdout.cursorTo(0, h);
+        process.stdout.write(inputLine);
+    }
+    
+    return a;
+}
+
+function clearInput(){
+    process.stdout.cursorTo(0, h);
+    process.stdout.write(' '.repeat(w-1));
 }
 
 function info(a){
