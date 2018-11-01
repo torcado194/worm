@@ -101,14 +101,14 @@ let worm = new Worm(source, input, delay);
 
 The program abstracts out the following events for your convenience:
 
-> worm.on('positionUpdate', to:{x,y}, from:{x,y})
-> worm.on('stackUpdate', new, old, added[], removed[])
-> worm.on('directionUpdate', to:{dx, dy, angle}, from)
-> worm.on('edgeDetect', pos:{x,y})
-> worm.on('instruction', char, name?, pos:{x,y})
-> worm.on('inputBufferUpdate', new, old, removed[])
-> worm.on('boardUpdate', new[][], old[][], added[], replaced[], locations[])
-> worm.on('input', type("character","number")) //blocking input, requires response
-> worm.on('output', data, raw, type("character","number"))
-> worm.on('wait', time)
-> worm.on('end', fullOutput)
+> worm.on('positionUpdate', to:{x,y}, from:{x,y})  
+> worm.on('stackUpdate', new, old, added[], removed[])  
+> worm.on('directionUpdate', to:{dx, dy, angle}, from)  
+> worm.on('edgeDetect', pos:{x,y})  
+> worm.on('instruction', char, name?, pos:{x,y})  
+> worm.on('inputBufferUpdate', new, old, removed[])  
+> worm.on('boardUpdate', new[][], old[][], added[], replaced[], locations[])  
+> worm.on('input', type("character","number")) //blocking input, requires response  
+> worm.on('output', data, raw, type("character","number"))  
+> worm.on('wait', time)  
+> worm.on('end', fullOutput)  
