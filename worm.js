@@ -11,7 +11,9 @@ let flags = {
     '-c': "code",
     '--code': "code",
     '-d': "delay",
-    '--delay': "delay"
+    '--delay': "delay",
+    '--v': "verbose",
+    '--verbose': "verbose",
 }
 
 function init(){
@@ -21,8 +23,9 @@ function init(){
     let source = '',
         sourceIndex = 0,
         input = '',
-        delay = 0;
-    log(args);
+        delay = 0,
+        verbose = false;
+    
     //if -c or --code flag is passed, ignore file input
     if(args.includes("-c") || args.includes("--code")){
         let index = args.findIndex(a => a === "-c" || a === "--code");
@@ -45,6 +48,9 @@ function init(){
     } else {
         delay = 0;
     }
+    if(args.includes("-v") || args.includes("--verbose")){
+        verbose = true;
+    }
     
     if(Object.keys(flags).includes(args[sourceIndex + 1])){
         input = '';
@@ -52,21 +58,27 @@ function init(){
         input = args[sourceIndex + 1];
     }
     
-    log(source);
+    if(verbose){
+        log(source);
+    }
     
     let worm = new Worm(source, input, delay);
     worm.on('instruction', (char, name, pos) => {
-        //log(chalk.blueBright(char));
-        let inst = char === worm.EDGE ? '░' : char;
-        log(chalk`{green ${inst}}    {cyan (${pos.x}, ${pos.y})}{gray   |  }{red (${worm.pointer.dir.x}, ${worm.pointer.dir.y})}${new Array(8 - `${worm.pointer.dir.x}, ${worm.pointer.dir.y}`.length).join(' ')}: {magenta ${worm.pointer.getAngle()}}{gray   |  }{yellow ${worm.stack.values}}{redBright  [${worm.input}]}`);
+        if(verbose){
+            //log(chalk.blueBright(char));
+            let inst = char === worm.EDGE ? '░' : char;
+            log(chalk`{green ${inst}}    {cyan (${pos.x}, ${pos.y})}{gray   |  }{red (${worm.pointer.dir.x}, ${worm.pointer.dir.y})}${new Array(8 - `${worm.pointer.dir.x}, ${worm.pointer.dir.y}`.length).join(' ')}: {magenta ${worm.pointer.getAngle()}}{gray   |  }{yellow ${worm.stack.values}}{redBright  [${worm.input}]}`);
+        }
     });
     worm.on('output', (data) => {
         log(chalk.keyword('orange')(data));
     });
     worm.on('end', (output) => {
-        log(worm.output);
-        log(chalk`{magenta ::done!::  }{keyword('orange') ${output}}`);
-        log(chalk.greenBright(source));
+        if(verbose){
+            log(worm.output);
+            log(chalk.greenBright(source));
+            log(chalk`{magenta ::done!::  }{keyword('orange') ${output}}`);
+        }
         process.stdin.emit('end');
         process.exit(0);
     });
@@ -86,8 +98,10 @@ function init(){
                 charMode = false;
                 process.stdin.setRawMode(false);
             }
-            log(input);
-            log([...input]);
+            if(verbose){
+                log(input);
+                log([...input]);
+            }
             cb(input.toString());
             process.stdin.removeListener('data', handler);
         }

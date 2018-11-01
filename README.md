@@ -5,10 +5,27 @@
 # Getting started
 
 This repo is a node.js implementation of the language. To use it, clone the repo and run it like so:
-
 ```
 $ node worm.js program.worm
 ```
+
+To add input to the program, add it acter the code:
+```
+$ node worm.js program.worm "this is input"
+```
+
+To execute code in-line, use the `-c` / `--code` flag:
+```
+$ node worm.js --code "\/\/>;"
+```
+
+To add delay between execution steps, use the `-d` / `--delay` flag:
+```
+$ node worm.js program.worm -delay 200
+```
+> This will add 200 milliseconds of delay between each step
+
+
 
 # Reference sheet
 

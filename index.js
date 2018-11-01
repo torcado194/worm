@@ -40,7 +40,7 @@ function Worm(code, input = [], delay = 0){
         worm.running = true;
         worm.emit('test');
         pointer.instruction = board.get(pointer.x, pointer.y);
-        log(worm.board.code);
+        //log(worm.board.code);
         
         if(delay !== 'step'){
             this.update();
