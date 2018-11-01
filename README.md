@@ -25,7 +25,7 @@ $ node worm.js program.worm --delay 200
 ```
 > This will add 200 milliseconds of delay between each step
 
-To run \/\/> in verbose mode, which displays useful information as it runs, use the `-v` / `--verbose` flag:
+To run \\/\\/> in verbose mode, which displays useful information as it runs, use the `-v` / `--verbose` flag:
 ```
 $ node worm.js program.worm --verbose
 ```
