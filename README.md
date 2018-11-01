@@ -42,7 +42,7 @@ The --verbose and --delay flags will be ignored, but input and --code will work 
 
 The visualizer will look like this:
 
-[visualizer demo](https://raw.githubusercontent.com/torcado194/worm/master/images/visualizer-demo.gif)
+![visualizer demo](https://raw.githubusercontent.com/torcado194/worm/master/images/visualizer-demo.gif)
 
 # Reference sheet
 
