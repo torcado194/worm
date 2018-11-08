@@ -14,6 +14,8 @@ let flags = {
     '--delay': "delay",
     '--v': "verbose",
     '--verbose': "verbose",
+    '--i': "verbose",
+    '--input': "verbose",
 }
 
 function init(){
@@ -58,6 +60,11 @@ function init(){
         input = args[sourceIndex + 1];
     }
     
+    if(args.includes("-i") || args.includes("--input")){
+        let index = args.findIndex(a => a === "-i" || a === "--input");
+        input = fs.readFileSync(args[index + 1], {encoding: "utf8"});
+    }
+    
     if(verbose){
         log(source);
     }
@@ -71,7 +78,8 @@ function init(){
         }
     });
     worm.on('output', (data) => {
-        log(chalk.keyword('orange')(data));
+        process.stdout.write(data.toString());
+        //log(chalk.keyword('orange')(data));
     });
     worm.on('end', (output) => {
         if(verbose){
