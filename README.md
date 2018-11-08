@@ -14,6 +14,11 @@ To add input to the program, add it acter the code:
 $ node worm.js program.worm "this is input"
 ```
 
+You can also send input from a file using the `-i` / `--input` flag:
+```
+$ node worm.js program.worm --input program.input
+```
+
 To execute code in-line, use the `-c` / `--code` flag:
 ```
 $ node worm.js --code "\/\/>;"
