@@ -282,6 +282,7 @@ function Worm(code, input = [], delay = 0){
             }
             if(!this.shifting){
                 this.origDir = {x: this.dir.x, y: this.dir.y};
+                this.tempAngle = this.getAngle();
             }
             /*if(this.shifting && !(this.instruction === 'x' || this.instruction === 'y')){
                 this.dir = {x: this.origDir.x, y: this.origDir.y};
@@ -587,9 +588,10 @@ function Worm(code, input = [], delay = 0){
         },
         'x': () => {
             pointer.shifting = true;
-            let angle = toAngle(pointer.x - pointer.prev.x, pointer.y - pointer.prev.y);
-            pointer.prev = {x: pointer.x, y: pointer.y};
-            pointer.setAngle(angle + 1);
+            //let angle = toAngle(pointer.x - pointer.prev.x, pointer.y - pointer.prev.y);
+            pointer.tempAngle = pointer.tempAngle + 1;
+            //pointer.prev = {x: pointer.x, y: pointer.y};
+            pointer.setAngle(pointer.tempAngle);
             pointer.move();
             //pointer.setAngle(angle);
             pointer.setDir(pointer.origDir.x, pointer.origDir.y);
@@ -597,9 +599,10 @@ function Worm(code, input = [], delay = 0){
         },
         'y': () => {
             pointer.shifting = true;
-            let angle = toAngle(pointer.x - pointer.prev.x, pointer.y - pointer.prev.y);
-            pointer.prev = {x: pointer.x, y: pointer.y};
-            pointer.setAngle(angle - 1);
+            //let angle = toAngle(pointer.x - pointer.prev.x, pointer.y - pointer.prev.y);
+            pointer.tempAngle = pointer.tempAngle - 1;
+            //pointer.prev = {x: pointer.x, y: pointer.y};
+            pointer.setAngle(pointer.tempAngle);
             pointer.move();
             //pointer.setAngle(angle);
             pointer.setDir(pointer.origDir.x, pointer.origDir.y);
