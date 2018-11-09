@@ -3,6 +3,8 @@ const EventEmitter = require('events').EventEmitter;
 
 const EDGE = Symbol("edge");
 
+const MAX_RECURSION = 5000;
+
 const log = console.log;
 
 util.inherits(Worm, EventEmitter);
@@ -26,6 +28,8 @@ function Worm(code, input = [], delay = 0){
     worm.nextStep = 'execute';
     
     worm.cycleCount = 0;
+    
+    worm.curRecursion = 0;
     
     this.init = function(){
         board = worm.board = new Board(worm.source);
@@ -74,6 +78,9 @@ function Worm(code, input = [], delay = 0){
             }
         }
         this.set = function(x, y, v){
+            if(x < 0 || y < 0){
+                return;
+            }
             let oldBoard = this.code.map(a => a.slice());
             let oldChar = this.get(x, y);
             v = String.fromCharCode(v || 32);
@@ -787,7 +794,14 @@ function Worm(code, input = [], delay = 0){
                         worm.update();
                     }, delay);
                 } else {
-                    worm.update();
+                    worm.curRecursion++;
+                    if(worm.curRecursion >= MAX_RECURSION){
+                        setTimeout(()=>{
+                            worm.update();
+                        }, 0);
+                    } else {
+                        worm.update();
+                    }
                 }
             }
         }
