@@ -153,7 +153,7 @@ function Worm(code, input = [], delay = 0){
         }
         
         this.duplicate = function(){
-            if(this.current.values > 0){
+            if(this.current.values.length > 0){
                 this.current.values.push(this.current.values[this.current.values.length-1]);
             }
         }
@@ -163,13 +163,13 @@ function Worm(code, input = [], delay = 0){
         }
         
         this.shift = function(){
-            if(this.current.values > 0){
+            if(this.current.values.length > 0){
                 this.current.values.unshift(this.current.values.pop());
             }
         }
         
         this.unshift = function(){
-            if(this.current.values > 0){
+            if(this.current.values.length > 0){
                 this.current.values.push(this.current.values.shift());
             }
         }
