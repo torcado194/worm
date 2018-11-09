@@ -19,6 +19,11 @@ You can also send input from a file using the `-i` / `--input` flag:
 $ node worm.js program.worm --input program.input
 ```
 
+To send output to a file, use the `-o` / `--output` flag:
+```
+$ node worm.js program.worm --output program.output
+```
+
 To execute code in-line, use the `-c` / `--code` flag:
 ```
 $ node worm.js --code "\/\/>;"

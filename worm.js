@@ -16,6 +16,8 @@ let flags = {
     '--verbose': "verbose",
     '--i': "input",
     '--input': "input",
+    '--o': "output",
+    '--output': "output",
 }
 
 function init(){
@@ -25,6 +27,8 @@ function init(){
     let source = '',
         sourceIndex = 0,
         input = '',
+        outputFile = false,
+        outputFileStream,
         delay = 0,
         verbose = false;
     
@@ -53,6 +57,11 @@ function init(){
     if(args.includes("-v") || args.includes("--verbose")){
         verbose = true;
     }
+    if(args.includes("-o") || args.includes("--output")){
+        let index = args.findIndex(a => a === "-o" || a === "--output");
+        outputFile = args[index + 1];
+        outputFileStream = fs.createWriteStream(outputFile, {flags: 'a'})
+    }
     
     if(Object.keys(flags).includes(args[sourceIndex + 1])){
         input = '';
@@ -78,8 +87,15 @@ function init(){
         }
     });
     worm.on('output', (data) => {
-        process.stdout.write(data.toString());
-        //log(chalk.keyword('orange')(data));
+        if(verbose){
+            log(chalk.keyword('orange')(data));
+        } else {
+            if(outputFile){
+                outputFileStream.write(data);
+            } else {
+                process.stdout.write(data.toString());
+            }
+        }
     });
     worm.on('end', (output) => {
         if(verbose){
@@ -87,6 +103,10 @@ function init(){
             log(chalk.greenBright(source));
             log(chalk`{magenta ::done!::  }{keyword('orange') ${output}}`);
         }
+        if(outputFile){
+            log("output sent to " + outputFile);
+        }
+        outputFileStream.end();
         process.stdin.emit('end');
         process.exit(0);
     });
