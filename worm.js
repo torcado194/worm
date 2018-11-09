@@ -14,8 +14,8 @@ let flags = {
     '--delay': "delay",
     '--v': "verbose",
     '--verbose': "verbose",
-    '--i': "verbose",
-    '--input': "verbose",
+    '--i': "input",
+    '--input': "input",
 }
 
 function init(){

@@ -7,10 +7,6 @@ const log = console.log;
 let w = 0,
     h = 0;
 
-let source = '',
-    sourceIndex = 0,
-    input = '';
-
 let done = false;
 
 let characterCount = 0,
@@ -145,7 +141,8 @@ process.on('SIGWINCH', resizeHandler);
 function resizeHandler(){
     w = process.stdout.columns;
     h = process.stdout.rows - 1;
-    log(chalk.yellow(w, h));
+    //log(chalk.yellow(w, h));
+    refresh();
 }
 
 
@@ -170,7 +167,8 @@ let cursor = {x: 0, y: 0};
 
 let playing = false,
     playSpeed = 3,
-    playSpeedMax = 11;
+    playSpeedMax = 11,
+    skipAmount = 1;
 let lastStepSize = '';
 
 let inputCharMode = false;
@@ -236,10 +234,26 @@ function inputHandler(input){
             if(playing && curControl.name === 'play'){
                 playSpeed = (playSpeed + 1) % playSpeedMax;
             }
+            if(curControl.name === 'fullStep'){
+                if(skipAmount < 1){
+                    skipAmount = 1;
+                } else {
+                    skipAmount++;
+                }
+            }
         }
         if(input == '\u001B\u005B\u0042'){ //down
             if(playing && curControl.name === 'play'){
                 playSpeed = ((playSpeed - 1) + playSpeedMax) % playSpeedMax;
+            }
+            if(curControl.name === 'fullStep'){
+                if(skipAmount === 1){
+                    skipAmount = .5;
+                } else if(skipAmount === .5) {
+                    
+                } else {
+                    skipAmount--;
+                }
             }
         }
         
@@ -250,7 +264,13 @@ function inputHandler(input){
         if(char === ' '){
             if(curControl.name === 'fullStep'){
                 lastStepSize = 'full';
-                worm.update();
+                if(skipAmount === .5){
+                    worm.step();
+                } else {
+                    for(let i = 0; i < skipAmount; i++){
+                        worm.update();
+                    }
+                }
                 draw();
             } else if(curControl.name === 'halfStep'){
                 lastStepSize = 'half';
@@ -340,6 +360,8 @@ function updateCursor(){
 let flags = {
     '-c': "code",
     '--code': "code",
+    '-i': "input",
+    '--input': "input",
     //'-d': "delay",
     //'--delay': "delay"
 }
@@ -347,6 +369,10 @@ let flags = {
 init();
 function init(){
     let args = process.argv.slice(2);
+    
+    let source = '',
+        sourceIndex = 0,
+        input = '';
     
     if(args.includes("-c") || args.includes("--code")){
         let index = args.findIndex(a => a === "-c" || a === "--code");
@@ -364,6 +390,10 @@ function init(){
         input = '';
     } else {
         input = args[sourceIndex + 1];
+    }
+    if(args.includes("-i") || args.includes("--input")){
+        let index = args.findIndex(a => a === "-i" || a === "--input");
+        input = fs.readFileSync(args[index + 1], {encoding: "utf8"});
     }
     
     worm = new Worm(source, input, 'step');
@@ -440,7 +470,8 @@ function draw(p){
     //trail(a);
     
     if(p){
-        print(a);
+        //print(a);
+        render(a, []);
     } else {
         render(a, prevScreen);
     }
@@ -448,6 +479,11 @@ function draw(p){
     prevScreen = [...screen];
     
     updateCursor();
+}
+
+function refresh(){
+    //render(screen, []);
+    draw(true);
 }
 
 function render(screen, prev){
@@ -465,10 +501,10 @@ function render(screen, prev){
     for(let i = 0; i < screen.length; i++){
         let a = screen[i],
             b = prev[i];
-        if(a === undefined || b === undefined){
+        if(a === undefined){
             break;
         }
-        if(same(a, b)){
+        if(b === undefined || same(a, b)){
             if(line.length !== 0){
                 out.cursorTo(lineStart % w, Math.floor(lineStart / w)) //convert to x,y
                 out.write(line);
@@ -739,7 +775,7 @@ function dashboard(a){
     let edit = `[√]`;
 //    let eventStep = `[‣`;
     let halfStep = `[⠆`;
-    let fullStep = `∙]`;
+    let fullStep = `∙1]`;
 //    let fullStep = `≥]`;
     //let eventStep = `ⵗ]`;
     let play = playing ? `[‼` : `[►`;
@@ -751,7 +787,7 @@ function dashboard(a){
     //makeBorder(a, dashboardX, dashboardY, info.length + 4, 3, 'cyanBright');
     a.splice(beginning + w + 2, info.length, ...info);
     
-    let controls = escape(`${edit}  ${halfStep} ${fullStep}   ${play}  ${stop}`, c['controls']);
+    let controls = escape(`${edit}  ${halfStep} ${fullStep}  ${play}  ${stop}`, c['controls']);
     dashboardControls[0].pos = (dashboardWidth - controls.length - 3) + 1;
     dashboardControls[1].pos = (dashboardWidth - controls.length - 3) + 6;
     dashboardControls[2].pos = (dashboardWidth - controls.length - 3) + 8;
@@ -764,7 +800,19 @@ function dashboard(a){
     a.splice(beginning + w + (dashboardWidth - (controls.length + 4)) + controls.length + 1, 1, ' ');
     a.splice(beginning + w + dashboardWidth - controls.length - 3, controls.length, ...controls);
     
-    
+    {
+        let num = skipAmount;
+        num = num === .5 ? '.5' : num.toString();
+        a.splice(fromEnd(dashboardX + dashboardControls[2].pos + 1 + w * (dashboardY + 1)), (num.length + 1), ...escape(num + ']', c['controls']))
+        num = skipAmount === .5 ? 1 : skipAmount + 1;
+        a.splice(fromEnd(dashboardX + dashboardControls[2].pos + 1 + w * (dashboardY + 0)), (num.toString().length), ...escape(num.toString(), c['controls']))
+        if(skipAmount >= 1){
+            num = skipAmount === 1 ? .5 : skipAmount - 1;
+            num = num === .5 ? '.5' : num.toString();
+            a.splice(fromEnd(dashboardX + dashboardControls[2].pos + 1 + w * (dashboardY + 2)), (num.length), ...escape(num, c['controls']))
+        }
+        
+    }
     if(playing){
         let num = (playSpeed + 1) % playSpeedMax;
         a.splice(fromEnd(dashboardX + dashboardControls[3].pos - (num.toString().length) + w * (dashboardY + 0)), (num.toString().length), ...escape(num.toString(), c['controls']))
@@ -799,7 +847,29 @@ function stacks(a){
     beginning = dashStart - w * 2 + (dashboardWidth - (worm.stack.register.values.join(',').length + 2));
     a.splice(beginning, worm.stack.register.values.join(',').length + 2, ...escape('[' + worm.stack.register.values.join(',') + ']', 'redBright'));
     
-    a.splice(dashStart - w * 1, worm.input.join('').length, ...escape(worm.input.join(''), 'magentaBright'));
+    let input = worm.input,
+        line = '';
+    if(input.length > 0){
+        let y = (input.join('').match(/\r?\n/g) || []).length;
+        for(let i = 0; i < input.length; i++){
+            if(/\n/g.test(input[i])){
+                if(line.length > 0){
+                    a.splice(dashStart - w * (y + 1), line.length, ...escape(line, 'magentaBright'));
+                    //render(a, []);
+                }
+                line = '';
+                y--;
+            } else if(/\r/g.test(input[i])){
+
+            } else {
+                line += input[i];
+            }
+        }
+        if(line.length > 0){
+            a.splice(dashStart - w * (y + 1), line.length, ...escape(line, 'magentaBright'));
+            //render(a, []);
+        }
+    }
     
     return a;
 }
@@ -814,7 +884,7 @@ function output(a){
             if(line.length > 0){
                 a.splice(fromEnd(3 + w * (row + 3)), line.length, ...escape(line, 'magentaBright'));
             }
-            row++
+            row++;
             line = '';
         } else {
             line += worm.output[i];

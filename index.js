@@ -153,7 +153,9 @@ function Worm(code, input = [], delay = 0){
         }
         
         this.duplicate = function(){
-            this.current.values.push(this.current.values[this.current.values.length-1]);
+            if(this.current.values > 0){
+                this.current.values.push(this.current.values[this.current.values.length-1]);
+            }
         }
         
         this.reverse = function(){
@@ -161,11 +163,15 @@ function Worm(code, input = [], delay = 0){
         }
         
         this.shift = function(){
-            this.current.values.unshift(this.current.values.pop());
+            if(this.current.values > 0){
+                this.current.values.unshift(this.current.values.pop());
+            }
         }
         
         this.unshift = function(){
-            this.current.values.push(this.current.values.shift());
+            if(this.current.values > 0){
+                this.current.values.push(this.current.values.shift());
+            }
         }
         
         this.toRegister = function(){
@@ -648,18 +654,27 @@ function Worm(code, input = [], delay = 0){
             stack.pop();
         },
         '$': () => {
-            let x = stack.pop();
-            let y = stack.pop();
-            stack.push(x);
-            stack.push(y);
+            if(stack.length() >= 2){
+                let x = stack.pop();
+                let y = stack.pop();
+                stack.push(x);
+                stack.push(y);
+            }
         },
         '@': () => {
-            let x = stack.pop();
-            let y = stack.pop();
-            let z = stack.pop();
-            stack.push(x);
-            stack.push(z);
-            stack.push(y);
+            if(stack.length() >= 3){
+                let x = stack.pop();
+                let y = stack.pop();
+                let z = stack.pop();
+                stack.push(x);
+                stack.push(z);
+                stack.push(y);
+            } else if(stack.length() >= 2){
+                let x = stack.pop();
+                let y = stack.pop();
+                stack.push(x);
+                stack.push(y);
+            }
         },
         '}': () => {
             stack.shift();
