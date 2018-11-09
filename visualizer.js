@@ -10,6 +10,7 @@ let w = 0,
 let done = false;
 
 let characterCount = 0,
+    characterCountOrig = 0,
     cycleCount = 0;
 
 let worm;
@@ -397,6 +398,8 @@ function init(){
     }
     
     worm = new Worm(source, input, 'step');
+    
+    characterCountOrig = source.replace(/\r?\n/g, '\n').length;
     
     worm.on('positionUpdate', (to, from) => {
         pointerTrail.splice(0, 0, {x: from.x, y: from.y});
@@ -919,11 +922,13 @@ function clearInput(){
 }
 
 function info(a){
-    let charCount = worm.board.code.reduce((arr, v) => arr.concat(v)).length + (worm.board.code.length - 1)
-    let text = charCount + ' chars';
-    a.splice(fromEnd((w - text.length - 3) + w * 1), text.length, ...escape(charCount.toString(), 'magentaBright'), ...escape(' chars', 'blueBright'));
+    let charCount = characterCount = worm.board.code.reduce((arr, v) => arr.concat(v)).length + (worm.board.code.length - 1),
+        charCountOrig = characterCountOrig;
+    let text = charCount + ' (' + charCountOrig + ') chars'
+    //a.splice(fromEnd((w - text.length - 3) + w * 1), text.length, ...escape(charCount.toString(), 'magentaBright'), ...escape(' (', 'yellowBright'), ...escape(charCountOrig.toString(), 'greenBright'),...escape(') ', 'yellowBright'), ...escape(' chars', 'blueBright'));
+    a.splice(fromEnd((w - text.length - 3) + w * 1), text.length, ...escape(charCount.toString(), 'magentaBright'), ...escape(' (' + charCountOrig.toString() + ')', 'cyanBright'), ...escape(' chars', 'blueBright'));
     
-    text = worm.cycleCount + ' cycles';
+    text = (cycleCount = worm.cycleCount) + ' cycles';
     a.splice(fromEnd((w - text.length - 3) + w * 2), text.length, ...escape(worm.cycleCount.toString(), 'magentaBright'), ...escape(' cycles', 'blueBright'));
     
     return a;
