@@ -209,9 +209,17 @@ function Worm(code, input = [], delay = 0){
             if(board.get(this.x, this.y) === EDGE){
                 let line = board.code[this.y];
                 if(this.x < 0){
-                    this.x = line.length - 1;
+                    if(this.dir.x === 1){
+                        this.x = 0;
+                    } else {
+                        this.x = line.length - 1;
+                    }
                 } else if(this.x > line.length - 1){
-                    this.x = 0;
+                    if(this.dir.x === -1){
+                        this.x = line.length - 1;
+                    } else {
+                        this.x = 0;
+                    }
                 }
             }
             
@@ -221,9 +229,17 @@ function Worm(code, input = [], delay = 0){
         this.checkY = function(){
             if(board.get(this.x, this.y) === EDGE){
                 if(this.y < board.getTop(this.x)){
-                    this.y = board.getBottom(this.x);
+                    if(this.dir.y === 1){
+                        this.y = board.getTop(this.x);
+                    } else {
+                        this.y = board.getBottom(this.x);
+                    }
                 } else if(this.y > board.getBottom(this.x)){
-                    this.y = board.getTop(this.x);
+                    if(this.dir.y === -1){
+                        this.y = board.getBottom(this.x);
+                    } else {
+                        this.y = board.getTop(this.x);
+                    }
                 }
             }
             
