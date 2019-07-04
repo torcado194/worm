@@ -105,8 +105,8 @@ function init(){
         }
         if(outputFile){
             log("output sent to " + outputFile);
+            outputFileStream.end();
         }
-        outputFileStream.end();
         process.stdin.emit('end');
         process.exit(0);
     });
