@@ -60,7 +60,7 @@ function init(){
     if(args.includes("-o") || args.includes("--output")){
         let index = args.findIndex(a => a === "-o" || a === "--output");
         outputFile = args[index + 1];
-        outputFileStream = fs.createWriteStream(outputFile, {flags: 'a'})
+        outputFileStream = fs.createWriteStream(outputFile, {flags: 'w'});
     }
     
     if(Object.keys(flags).includes(args[sourceIndex + 1])){
@@ -108,7 +108,7 @@ function init(){
             outputFileStream.end();
         }
         process.stdin.emit('end');
-        process.exit(0);
+        //process.exit(0);
     });
     
     worm.on('input', (type, cb) => {

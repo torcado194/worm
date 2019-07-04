@@ -53,7 +53,7 @@ function Worm(code, input = [], delay = 0){
     
     
     function Board(source){
-        this.source = source.toLowerCase();
+        this.source = source;
         this.code = [[]];
         this.bottom = 0;
         
@@ -788,7 +788,7 @@ function Worm(code, input = [], delay = 0){
     }
     
     this.run = function(instruction){
-        instructions[instruction]();
+        instructions[instruction.toLowerCase()]();
     }
     
     this.update = function(move){
