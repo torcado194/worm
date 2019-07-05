@@ -662,7 +662,7 @@ function Worm(code, input = [], delay = 0){
                 let line = board.code[y];
                 for(let x = 0; x < line.length; x++){
                     if(board.code[y][x] === 'o' && !(x === current.x && y === current.y)){
-                        let dist = Math.abs((x - current.x) + (y - current.y));
+                        let dist = Math.abs(x - current.x) + Math.abs(y - current.y);
                         if(dist < minDist){
                             minDist = dist;
                             target = {x, y};

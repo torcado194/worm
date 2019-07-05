@@ -805,13 +805,13 @@ function dashboard(a){
     
     {
         let num = skipAmount;
-        num = num === .5 ? '.5' : num.toString();
+        num = num === .5 ? '½' : num.toString();
         a.splice(fromEnd(dashboardX + dashboardControls[2].pos + 1 + w * (dashboardY + 1)), (num.length + 1), ...escape(num + ']', c['controls']))
         num = skipAmount === .5 ? 1 : skipAmount + 1;
         a.splice(fromEnd(dashboardX + dashboardControls[2].pos + 1 + w * (dashboardY + 0)), (num.toString().length), ...escape(num.toString(), c['controls']))
         if(skipAmount >= 1){
             num = skipAmount === 1 ? .5 : skipAmount - 1;
-            num = num === .5 ? '.5' : num.toString();
+            num = num === .5 ? '½' : num.toString();
             a.splice(fromEnd(dashboardX + dashboardControls[2].pos + 1 + w * (dashboardY + 2)), (num.length), ...escape(num, c['controls']))
         }
         
